@@ -15,18 +15,9 @@ type Props = {
 export function TrimControls({ duration, startMs, endMs, setStartMs, setEndMs }: Props) {
 
   return (
-    <div className="space-y-4">
-        <div className="flex flex-row justify-between">
-          <label className="block text-xs font-medium mb-1">
-            Trim Start: {startMs.toFixed(0)}ms
-          </label>
-
-          <label className="block text-xs font-medium mb-1">
-            Trim End: {endMs.toFixed(0)}ms
-          </label>
-        </div>
-
+    <div className=" h-6">
         <RangeSlider
+          id="range-slider"
           min={0}
           max={duration * 1000}
           step={1}
@@ -35,7 +26,7 @@ export function TrimControls({ duration, startMs, endMs, setStartMs, setEndMs }:
             setStartMs(start)
             setEndMs(end)
           }}
-          className="w-full"
+          className="w-full bg-red-500"
         />
     </div>
   )

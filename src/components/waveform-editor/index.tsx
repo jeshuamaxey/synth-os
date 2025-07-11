@@ -32,13 +32,15 @@ const WaveformEditor = ({ vibeShifterAudio }: { vibeShifterAudio: VibeShifterAud
     setTrimmedDuration(vibeShifterAudio.trimmedDuration)
   }, [vibeShifterAudio.trimmedDuration])
 
-  return <div className="p-2">
-    <Waveform vibeShifterAudio={vibeShifterAudio} />
-
-    <div className="flex flex-row justify-between">
-      {trimmedDuration !== 0 && <div className="text-xs text-slate-500">Trimmed Duration: {trimmedDuration.toFixed(2)}s</div>}
-      {duration !== 0 && <div className="text-xs text-slate-500">Duration: {duration.toFixed(2)}s</div>}
+  return <div className="px-2">
+    <div className="relative">
+      <Waveform vibeShifterAudio={vibeShifterAudio} />
+      <div className="flex flex-col items-end absolute top-0 left-0 w-full p-1">
+        {trimmedDuration !== 0 && <div className="text-xs text-slate-500">Trimmed Duration: {trimmedDuration.toFixed(2)}s</div>}
+        {duration !== 0 && <div className="text-xs text-slate-500">Duration: {duration.toFixed(2)}s</div>}
+      </div>
     </div>
+
     <TrimControls duration={duration} startMs={startMs} endMs={endMs} setStartMs={setStartMs} setEndMs={setEndMs} />
   </div>
 }
