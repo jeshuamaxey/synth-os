@@ -19,3 +19,8 @@ User can select a vibe from a drop down of options or enter free text
 When vibe is changed, [generate instrument] is presented. Hitting generate instrument generates a new SFX from 11labs which becomes the keyboard base audio (middle C)
 Hitting the keys of the keyboard plays the base audio, pitched shifted by the appropriate number of tones
 
+VibeShifterAudio class
+
+methods:
+
+play key
