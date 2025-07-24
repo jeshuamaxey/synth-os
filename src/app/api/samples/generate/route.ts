@@ -64,7 +64,7 @@ async function searchForSample(prompt: string) {
 
 export const POST = async (req: Request) => {
   console.log('Generating sample')
-  const { prompt } = await req.json()
+  const { prompt, duration } = await req.json()
 
   const existingSampleUrl = await searchForSample(prompt)
   if (existingSampleUrl) {
@@ -81,7 +81,7 @@ export const POST = async (req: Request) => {
   console.log('Converting text to sound effects')
   const audio = await elevenlabs.textToSoundEffects.convert({
     text: prompt,
-    durationSeconds: 10,
+    durationSeconds: duration,
     outputFormat: 'mp3_44100_128',
   });
 
