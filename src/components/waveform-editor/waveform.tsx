@@ -66,15 +66,23 @@ const Waveform = ({ vibeShifterAudio }: { vibeShifterAudio: VibeShifterAudio }) 
       const barTime = (i / waveform.length) * bufDurS            // seconds of this bar
       const inTrimGap = barTime < trimStartS || barTime > trimEndS
 
-
-      ctx.fillStyle = inTrimGap ? '#ccc' : '#000'
-      ctx.fillRect(x, height - y, barWidth, y)
+      if (inTrimGap) {
+        ctx.fillStyle = '#222';
+        ctx.fillRect(x, height - y, barWidth, y);
+      } else {
+        ctx.save();
+        ctx.shadowColor = '#00ff41';
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = '#00ff41';
+        ctx.fillRect(x, height - y, barWidth, y);
+        ctx.restore();
+      }
     })
 
     // Draw playhead
     const playheadX = width * (keepStartRatio + playheadPercent * keepWidthRatio)
 
-    ctx.strokeStyle = 'red'
+    ctx.strokeStyle = '#ff4444'
     ctx.beginPath()
     ctx.moveTo(playheadX, 0)
     ctx.lineTo(playheadX, height)
@@ -130,7 +138,7 @@ const Waveform = ({ vibeShifterAudio }: { vibeShifterAudio: VibeShifterAudio }) 
     return () => cancelAnimationFrame(frameId)
   }, [vibeShifterAudio.buffer, vibeShifterAudio.ctx, vibeShifterAudio.duration, vibeShifterAudio.startTime, vibeShifterAudio.trimStartMs, vibeShifterAudio.trimEndMs, drawWaveform, vibeShifterAudio.trimmedDuration])
 
-  return <canvas ref={canvasRef} width={300} height={80} className="border border-slate-300" />
+  return <canvas ref={canvasRef} width={300} height={80} className="" />
 }
 
 export default Waveform;

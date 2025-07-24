@@ -12,6 +12,9 @@ create table if not exists public.samples (
   id uuid primary key default gen_random_uuid(),
   normalized_prompt text not null unique,
   public_url text not null,
+  root_midi integer not null default 60,
+  trim_start integer,
+  trim_end integer,
   created_at timestamp with time zone default now()
 );
 

@@ -2,7 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { Sample } from "@/types";
+import { Sample } from "@/types/supabase";
 
 const SampleGenerator = ({ onSampleChange }: { onSampleChange: (sample: Sample) => void }) => {
   const [prompt, setPrompt] = useState("")
@@ -14,15 +14,11 @@ const SampleGenerator = ({ onSampleChange }: { onSampleChange: (sample: Sample) 
         body: JSON.stringify({ prompt })
       })
 
-      return response.json() as Promise<{ prompt: string, sampleUrl: string }>
+      return response.json() as Promise<Sample>
     },
     onSuccess: (data) => {
       console.log(data)
-      onSampleChange({
-        url: data.sampleUrl,
-        name: prompt,
-        rootMidi: 60
-      })
+      onSampleChange(data)
     }
   })
 

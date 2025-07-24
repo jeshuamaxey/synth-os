@@ -1,5 +1,4 @@
-// lib/vibeShifterAudio.ts
-type Note = number // MIDI number; 60 == C4
+import { Sample } from "@/types/supabase"
 
 const semitonesToRatio = (n: number) => Math.pow(2, n / 12)
 
@@ -38,6 +37,8 @@ export class VibeShifterAudio {
   public ctx: AudioContext | null = null
   public buffer: AudioBuffer | null = null
   public startTime: number | null = null
+  public isPlaying = false
+  public sample: Sample | undefined = undefined
   
   private inBrowser = typeof window !== 'undefined'
   private workletReady = false
@@ -52,8 +53,7 @@ export class VibeShifterAudio {
   private _trimEndMs: number | null = null
 
   constructor(
-    private sampleUrl: string,
-    private rootMidi: Note = 60, // sample recorded at C4 by default
+    sample: Sample | null = null,
     private options: typeof DEFAULT_OPTIONS = DEFAULT_OPTIONS
   ) {
     if (this.inBrowser) {
@@ -75,6 +75,10 @@ export class VibeShifterAudio {
       .catch((err) => {
         console.error('error loading sample', err)
       })
+
+      if(sample) {
+        this.sample = sample
+      }
 
     } else {
       this.log('cannot instantiate outside of browser')
@@ -116,8 +120,11 @@ export class VibeShifterAudio {
     if (!this.ctx) {
       console.warn('VibeShifterAudio: cannot load sample outside of browser'); return
     }
-    console.log('loading sample', this.sampleUrl)
-    const res = await fetch(this.sampleUrl)
+    if(!this.sample) {
+      console.warn('VibeShifterAudio: no sample to load'); return
+    }
+    console.log('loading sample', this.sample.public_url)
+    const res = await fetch(this.sample.public_url)
     const arrBuf = await res.arrayBuffer()
     this.buffer = await this.ctx.decodeAudioData(arrBuf)
     this._trimEndMs = this.buffer.duration * 1000
@@ -140,6 +147,9 @@ export class VibeShifterAudio {
     if(!this.workletReady) {
       console.warn('SoundTouch worklet not ready'); return
     }
+    if(!this.sample) {
+      console.warn('VibeShifterAudio: no sample to play'); return
+    }
 
     const TIMESTAMP_checks = performance.now()
 
@@ -153,7 +163,7 @@ export class VibeShifterAudio {
     const TIMESTAMP_buffer = performance.now()
     src.buffer = this.buffer
 
-    const diff = midi - this.rootMidi
+    const diff = midi - this.sample.root_midi
     const ratio = semitonesToRatio(diff)
 
     const TIMESTAMP_ratio = performance.now()

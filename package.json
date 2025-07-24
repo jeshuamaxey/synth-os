@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "node scripts/copy-soundtouch.ts"
+    "postinstall": "node scripts/copy-soundtouch.ts",
+    "gen:types": "supabase gen types typescript --local > src/types/supabase.autogen.ts"
   },
   "dependencies": {
     "@elevenlabs/elevenlabs-js": "^2.6.0",

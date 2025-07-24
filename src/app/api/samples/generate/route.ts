@@ -92,12 +92,14 @@ export const POST = async (req: Request) => {
   const sampleUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${url}`
 
   // Insert new sample into the samples table
-  const { error: insertError } = await supabase
+  const { data, error: insertError } = await supabase
     .from('samples')
     .insert({
       normalized_prompt: normalizedPrompt,
       public_url: sampleUrl,
     })
+    .select()
+    .single()
 
   if (insertError) {
     console.error('Error inserting new sample into table', insertError)
@@ -106,7 +108,10 @@ export const POST = async (req: Request) => {
   console.log('Sample generated')
 
   return NextResponse.json({
-    prompt,
-    sampleUrl,
+    id: data.id,
+    public_url: data.public_url,
+    root_midi: data.root_midi,
+    trim_start: data.trim_start,
+    trim_end: data.trim_end,
   })
 }
