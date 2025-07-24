@@ -116,6 +116,7 @@ export class VibeShifterAudio {
     if (!this.ctx) {
       console.warn('VibeShifterAudio: cannot load sample outside of browser'); return
     }
+    console.log('loading sample', this.sampleUrl)
     const res = await fetch(this.sampleUrl)
     const arrBuf = await res.arrayBuffer()
     this.buffer = await this.ctx.decodeAudioData(arrBuf)

@@ -10,8 +10,10 @@
     "postinstall": "node scripts/copy-soundtouch.ts"
   },
   "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.6.0",
     "@radix-ui/react-slot": "^1.2.3",
     "@soundtouchjs/audio-worklet": "^0.2.1",
+    "@supabase/supabase-js": "^2.50.5",
     "@tanstack/react-query": "^5.81.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -32,6 +34,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.5",
+    "supabase": "^2.30.4",
     "tailwindcss": "^4.1.11",
     "typescript": "^5"
   }

@@ -1,0 +1,31 @@
+-- Create the audio bucket
+insert into storage.buckets (id, name, public) values ('audio', 'audio', true);
+
+-- Allow anyone (including anon) to upload files to the audio bucket
+create policy "Anyone can upload to audio bucket"
+on storage.objects
+for insert
+with check (bucket_id = 'audio');
+
+-- Create the samples table
+create table if not exists public.samples (
+  id uuid primary key default gen_random_uuid(),
+  normalized_prompt text not null unique,
+  public_url text not null,
+  created_at timestamp with time zone default now()
+);
+
+-- Enable row level security
+alter table public.samples enable row level security;
+
+-- Policy: Anyone can select from samples
+create policy "Public read access to samples"
+  on public.samples
+  for select
+  using (true);
+
+-- Policy: Allow insert for authenticated users (customize as needed)
+create policy "Authenticated insert access to samples"
+  on public.samples
+  for insert
+  with check (true);
