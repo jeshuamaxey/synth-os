@@ -41,7 +41,7 @@ const VibeShifterTerminal = () => {
   const [bootTypingLines, setBootTypingLines] = useState<string[]>([]);
   const [bootTypingCurrentLine, setBootTypingCurrentLine] = useState<string>("");
   // Play boot-up sound
-  const bootAudioRef = useRef<HTMLAudioElement | null>(null);
+  // const bootAudioRef = useRef<HTMLAudioElement | null>(null);
   const terminalScreenRef = useRef<HTMLDivElement>(null);
 
   const { refetch: refetchSamples } = useSamples();
@@ -56,12 +56,12 @@ const VibeShifterTerminal = () => {
   useEffect(() => {
     (async () => {
       // Play boot-up sound
-      if (!bootAudioRef.current) {
-        bootAudioRef.current = new Audio("/audio/boot-up.mp3");
-        bootAudioRef.current.volume = 0.7;
-      }
-      bootAudioRef.current.currentTime = 0;
-      bootAudioRef.current.play();
+      // if (!bootAudioRef.current) {
+      //   bootAudioRef.current = new Audio("/audio/boot-up.mp3");
+      //   bootAudioRef.current.volume = 0.7;
+      // }
+      // bootAudioRef.current.currentTime = 0;
+      // bootAudioRef.current.play();
       // setBootStage(0); // black
       await sleep(1200);
       // setBootStage(1); // crt flicker
@@ -193,9 +193,13 @@ const VibeShifterTerminal = () => {
       case "clear":
         handleClear();
         break;
-        case "generate":
-        case "gen":
+      case "generate":
+      case "gen":
         await handleGenerate(args);
+        break;
+      case "load":
+        console.log("loading example")
+        await handleLoadExample();
         break;
       default:
         setHistory(h => [...h, `Unknown command: ${args[0]}`]);
@@ -230,6 +234,19 @@ const VibeShifterTerminal = () => {
       });
     }
   };
+
+  const handleLoadExample = async () => {
+    setSample({
+      "id": "966b2915-be13-409a-b452-588ccee52b21",
+      "normalized_prompt": "the_ding_of_a_receptionists_bell",
+      "public_url": "http://127.0.0.1:54321/storage/v1/object/public/audio/the_ding_of_a_receptionists_bell.mp3",
+      "root_midi": 60,
+      "trim_start": null,
+      "trim_end": null,
+      "created_at": "2025-07-24T16:12:51.071267+00:00"
+    })
+    setHistory(h => [...h, "Example sample loaded. Keyboard and waveform activated."]);
+  }
 
   return (
     <div className={styles.consoleContainer}>

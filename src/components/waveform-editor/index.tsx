@@ -1,15 +1,23 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { VibeShifterAudio } from "@/lib/audio/vibe-shifter"
 import Waveform from "./waveform"
 import { TrimControls } from "./trim-controls"
 
 const WaveformEditor = ({ vibeShifterAudio }: { vibeShifterAudio: VibeShifterAudio }) => {
+  const containerRef = useRef<HTMLDivElement>(null)
+
   const [startMs, setStartMs] = useState(vibeShifterAudio.trimStartMs)
   const [endMs, setEndMs] = useState(vibeShifterAudio.trimEndMs)
   const [duration, setDuration] = useState(0)
   const [trimmedDuration, setTrimmedDuration] = useState(0)
+  const [width, setWidth] = useState(300)
+
+  useEffect(() => {
+    console.log('containerRef.current?.clientWidth', containerRef.current?.clientWidth)
+    setWidth(containerRef.current?.clientWidth ?? 300)
+  }, [])
 
   // Sync local state to the vibe instance
   useEffect(() => {
@@ -32,16 +40,18 @@ const WaveformEditor = ({ vibeShifterAudio }: { vibeShifterAudio: VibeShifterAud
     setTrimmedDuration(vibeShifterAudio.trimmedDuration)
   }, [vibeShifterAudio.trimmedDuration])
 
-  return <div className="px-2">
-    <div className="relative">
-      <Waveform vibeShifterAudio={vibeShifterAudio} />
-      <div className="flex flex-col items-end absolute top-0 left-0 w-full p-1">
-        {trimmedDuration !== 0 && <div className="text-xs text-slate-500">Trimmed Duration: {trimmedDuration.toFixed(2)}s</div>}
-        {duration !== 0 && <div className="text-xs text-slate-500">Duration: {duration.toFixed(2)}s</div>}
+  return <div>
+    <div className="px-2" ref={containerRef}>
+      <div className="relative">
+        <Waveform vibeShifterAudio={vibeShifterAudio} width={width} height={100} />
+        <div className="flex flex-col items-end absolute top-0 left-0 w-full p-1">
+          {trimmedDuration !== 0 && <div className="text-xs text-slate-500">Trimmed Duration: {trimmedDuration.toFixed(2)}s</div>}
+          {duration !== 0 && <div className="text-xs text-slate-500">Duration: {duration.toFixed(2)}s</div>}
+          {trimmedDuration !== 0 && <div className="text-xs text-slate-500">Trimmed Duration: {((trimmedDuration / duration) * 100).toFixed(2)}%</div>}
+        </div>
       </div>
     </div>
-
-    <TrimControls duration={duration} startMs={startMs} endMs={endMs} setStartMs={setStartMs} setEndMs={setEndMs} />
+    <TrimControls duration={duration} startMs={startMs} endMs={endMs} setStartMs={setStartMs} setEndMs={setEndMs} width={width} />
   </div>
 }
 

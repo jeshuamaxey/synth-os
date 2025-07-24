@@ -95,31 +95,14 @@
     51%, 100% { opacity: 0; }
 }
 
-.progressBar {
-    color: #00ff41;
-}
-
-
-
 .waveformDisplay {
     background: #111;
-    height: 110px;
     border: 2px solid #333;
     border-radius: 4px;
     position: relative;
     overflow: hidden;
     margin-bottom: 15px;
     box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-}
-
-.waveformGrid {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background-image: 
-        linear-gradient(rgba(0,255,65,0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,255,65,0.1) 1px, transparent 1px);
-    background-size: 20px 20px;
 }
 
 .waveform {
@@ -142,21 +125,6 @@
     gap: 10px;
     align-items: center;
     font-size: 12px;
-}
-
-.controlButton {
-    background: linear-gradient(145deg, #555, #333);
-    border: 1px solid #666;
-    color: #ccc;
-    padding: 5px 10px;
-    border-radius: 3px;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.2s;
-}
-.controlButton:hover {
-    background: linear-gradient(145deg, #666, #444);
-    box-shadow: 0 0 10px rgba(0,255,65,0.3);
 }
 
 .keyboard {
@@ -219,29 +187,6 @@
 .blackKeyActive {
     background: linear-gradient(180deg, #00ff41, #00cc33);
     box-shadow: 0 0 15px #00ff41;
-}
-
-.statusIndicators {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 15px;
-    font-size: 11px;
-}
-
-.statusLight {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    margin-right: 5px;
-}
-.statusLightActive {
-    background: #00ff41;
-    box-shadow: 0 0 8px #00ff41;
-}
-.statusLightInactive {
-    background: #333;
 }
 
 @media (max-width: 768px) {

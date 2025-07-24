@@ -37,7 +37,6 @@ export class VibeShifterAudio {
   public ctx: AudioContext | null = null
   public buffer: AudioBuffer | null = null
   public startTime: number | null = null
-  public isPlaying = false
   public sample: Sample | undefined = undefined
   
   private inBrowser = typeof window !== 'undefined'
@@ -232,6 +231,10 @@ export class VibeShifterAudio {
 
   set trimEndMs(value: number) {
     this._trimEndMs = value
+  }
+
+  get isPlaying(): boolean {
+    return this.startTime !== null && this.ctx?.currentTime !== undefined && this.ctx?.currentTime > this.startTime
   }
 
   log(message: string) {

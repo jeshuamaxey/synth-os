@@ -19,7 +19,7 @@ function getWaveformData(buffer: AudioBuffer, samples = 300): number[] {
   return waveform
 }
 
-const Waveform = ({ vibeShifterAudio }: { vibeShifterAudio: VibeShifterAudio }) => {
+const Waveform = ({ vibeShifterAudio, width = 300, height = 80 }: { vibeShifterAudio: VibeShifterAudio, width?: number, height?: number }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const waveformRef = useRef<number[] | null>(null)
   const [waveformReady, setWaveformReady] = useState(false)
@@ -36,12 +36,12 @@ const Waveform = ({ vibeShifterAudio }: { vibeShifterAudio: VibeShifterAudio }) 
     const ctx = canvas?.getContext('2d')
     const waveform = waveformRef.current
 
+    
     if (!ctx || !canvas || !waveform) {
       return
     }
-
-    const width = canvas.width
-    const height = canvas.height
+    const waveformMax = Math.max(...waveform) * 1.2
+    const normalisedWaveform = waveform.map(v => v / waveformMax)
 
     ctx.clearRect(0, 0, width, height)
 
@@ -58,7 +58,7 @@ const Waveform = ({ vibeShifterAudio }: { vibeShifterAudio: VibeShifterAudio }) 
     const barWidth = width / waveform.length
 
     // Draw waveform
-    waveform.forEach((value, i) => {
+    normalisedWaveform.forEach((value, i) => {
       const x = i * barWidth
       const y = value * height
 
@@ -87,7 +87,7 @@ const Waveform = ({ vibeShifterAudio }: { vibeShifterAudio: VibeShifterAudio }) 
     ctx.moveTo(playheadX, 0)
     ctx.lineTo(playheadX, height)
     ctx.stroke()
-  }, [vibeShifterAudio.duration, vibeShifterAudio.trimStartMs, vibeShifterAudio.trimEndMs])
+  }, [width, height, vibeShifterAudio.duration, vibeShifterAudio.trimStartMs, vibeShifterAudio.trimEndMs])
 
   // Extract and cache waveform data
   useEffect(() => {
@@ -138,7 +138,7 @@ const Waveform = ({ vibeShifterAudio }: { vibeShifterAudio: VibeShifterAudio }) 
     return () => cancelAnimationFrame(frameId)
   }, [vibeShifterAudio.buffer, vibeShifterAudio.ctx, vibeShifterAudio.duration, vibeShifterAudio.startTime, vibeShifterAudio.trimStartMs, vibeShifterAudio.trimEndMs, drawWaveform, vibeShifterAudio.trimmedDuration])
 
-  return <canvas ref={canvasRef} width={300} height={80} className="" />
+  return <canvas ref={canvasRef} width={width} height={height} className="" />
 }
 
 export default Waveform;
