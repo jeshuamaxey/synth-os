@@ -29,17 +29,17 @@ export const PanelLight = ({ color, onClick }: { color: 'red' | 'yellow' | 'gree
 }
 
 // Panel component with header, lights, and collapse/expand logic
-export const Panel = ({ header, children }: { header: string, children: React.ReactNode }) => {
+export const Panel = ({ header, className, children }: { header: string, className?: string, children: React.ReactNode }) => {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="flex-1 max-w-none w-full h-full md:flex-none md:h-1/2 md:w-2/5">
+    <div className={`${className}`}>
       <div style={{ height: collapsed ? 'auto' : '100%', width: '100%' }}>
         <div className={`
           flex items-center justify-between cursor-pointer
           border-b border-[#222] shadow
           font-bold
-          bg-gradient-to-r from-[#333] to-[#555] text-[#ccc] px-4 py-2
+          bg-gradient-to-r from-[#444] via-[#666] to-[#444] text-[#ccc] px-4 py-2
           `}>
           <div className="flex gap-2">
             <PanelLight color="red" onClick={() => {}} />

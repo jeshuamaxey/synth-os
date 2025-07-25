@@ -1,32 +1,16 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import VibeShifter from ".";
 import { Sample } from "@/types/supabase";
-import styles from "./vibe-shifter-console.module.css";
 import { useSamples } from '@/hooks/useSamples';
+import { Panel } from "../panel";
+import TerminalScreen from "./terminal-screen";
+import { sleep } from "@/lib/utils";
 
-// Boot sequence steps
-const BOOT_TEXT = [
-  "SYNTH-OS v2.1 BOOTING...",
-  "[████████████████████████] 100%",
-  "",
-  "Initializing audio drivers... OK",
-  "Loading sample banks... OK",
-  "Calibrating oscillators... OK",
-  "Connecting modular rack... OK",
-  "",
-  "SYSTEM READY",
-  "Type 'help' for available commands",
-];
-
-function sleep(ms: number) {
-  return new Promise(res => setTimeout(res, ms));
-}
 
 const VibeShifterTerminal = () => {
   // bootStage, typedLines, currentLine are no longer needed
-  const [showCursor, setShowCursor] = useState(true);
   const [terminalActive, setTerminalActive] = useState(false);
   const [booting, setBooting] = useState(true);
   const [input, setInput] = useState("");
@@ -35,78 +19,13 @@ const VibeShifterTerminal = () => {
   const setHistoryIndex = useState<number | null>(null)[1];
   const [sample, setSample] = useState<Sample | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
   const [bootLines, setBootLines] = useState<string[]>([]); // Store boot text lines
-  const [bootTypingLines, setBootTypingLines] = useState<string[]>([]);
-  const [bootTypingCurrentLine, setBootTypingCurrentLine] = useState<string>("");
-  // Play boot-up sound
-  // const bootAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [progress, setProgress] = useState(0);
+  
+  const inputRef = useRef<HTMLInputElement>(null);
   const terminalScreenRef = useRef<HTMLDivElement>(null);
 
   const { refetch: refetchSamples } = useSamples();
-
-  // Blinking cursor
-  useEffect(() => {
-    const interval = setInterval(() => setShowCursor(c => !c), 500);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Boot sequence
-  useEffect(() => {
-    (async () => {
-      // Play boot-up sound
-      // if (!bootAudioRef.current) {
-      //   bootAudioRef.current = new Audio("/audio/boot-up.mp3");
-      //   bootAudioRef.current.volume = 0.7;
-      // }
-      // bootAudioRef.current.currentTime = 0;
-      // bootAudioRef.current.play();
-      // setBootStage(0); // black
-      await sleep(1200);
-      // setBootStage(1); // crt flicker
-      await sleep(800);
-      // setBootStage(2); // boot text
-      // Type out boot text
-      const lines: string[] = [];
-      for (let i = 0; i < BOOT_TEXT.length; i++) {
-        const line = BOOT_TEXT[i];
-        let typed = "";
-        for (let j = 0; j < line.length; j++) {
-          typed += line[j];
-          setBootTypingLines([...lines]);
-          setBootTypingCurrentLine(typed);
-          await sleep(18 + Math.random() * 30);
-        }
-        lines.push(line);
-        setBootTypingLines([...lines]);
-        setBootTypingCurrentLine("");
-        await sleep(120 + Math.random() * 100);
-      }
-      // setBootStage(3); // terminal
-      setTerminalActive(true);
-      // setTypedLines([...lines]);
-      // setCurrentLine("");
-      setBootLines([...lines]); // Save boot text for permanent display
-      setBootTypingLines([]);
-      setBootTypingCurrentLine("");
-      setBooting(false); // Boot sequence done, enable interactivity
-    })();
-  }, []);
-
-  // Focus input when terminal is active
-  useEffect(() => {
-    if (terminalActive && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [terminalActive]);
-
-  // Scroll terminal to bottom when output changes
-  useEffect(() => {
-    if (terminalScreenRef.current) {
-      terminalScreenRef.current.scrollTop = terminalScreenRef.current.scrollHeight;
-    }
-  }, [history, bootLines, isGenerating]);
 
   // Command handlers
   const handleLs = async () => {
@@ -288,80 +207,34 @@ const VibeShifterTerminal = () => {
     setHistory(h => [...h, `Sample ${sample.id} loaded. Keyboard and waveform activated.`]);
   }
 
-  const terminalText = `
-    font-mono
-    text-[oklch(0.8_0.25_142)] text-sm leading-[1.4]
-    [text-shadow:0_0_2px_oklch(0.8_0.25_142),0_0_6px_oklch(0.8_0.25_142),0_0_12px_oklch(0.8_0.25_142)]
-  `
 
   return (
-    <div className="h-full flex flex-col bg-[#1a1a1a] text-[#00ff41]">
-      {/* Terminal Section */}
-      <div className={styles.terminalSection}>
-        <div className={styles.terminalHeader}>
-          <div className={styles.terminalLights}>
-            <div className={`${styles.light} ${styles.lightRed}`}></div>
-            <div className={`${styles.light} ${styles.lightYellow}`}></div>
-            <div className={`${styles.light} ${styles.lightGreen}`}></div>
-          </div>
-          <div className={styles.terminalTitle}>SYNTH-OS v2.1</div>
-        </div>
-        <div
-          className={`${styles.terminalScreen} ${terminalText}`}
+    <div className="h-full min-h-screen max-h-screen flex flex-col bg-[#1a1a1a] text-[#00ff41]">
+
+      <Panel header="SYNTH-OS v2.1" className="flex-1 h-1/2 w-full max-w-none ">
+        <TerminalScreen
           ref={terminalScreenRef}
-          onClick={() => {
-            if (inputRef.current) inputRef.current.focus();
+          inputRef={inputRef}
+          onKeyDown={handleInput}
+          onChange={e => setInput(e.target.value)}
+          booting={booting}
+          history={history}
+          onBootComplete={(lines) => {
+            setTerminalActive(true);
+            setBooting(false);
+            setBootLines(lines);
           }}
-        >
-          {/* Boot text stays at the top, animate in during boot character by character */}
-          {booting
-            ? <>
-                {bootTypingLines.map((line, i) => <div key={i}>{line}</div>)}
-                {bootTypingCurrentLine && <div>{bootTypingCurrentLine}<span className={styles.cursor}>_</span></div>}
-              </>
-            : bootLines.map((line, i) => <div key={i}>{line}</div>)}
-          {/* Command history and output below boot text */}
-          {history.map((line, i) => <div key={i}><pre className={terminalText}>{line}</pre></div>)}
-          {isGenerating && (
-            <div className="text-ibm-green">
-              [
-              {Array.from({ length: 20 }, (_, i) => (
-                <span key={i} style={{ color: i < Math.round(progress * 20) ? '#00FF41' : '#003800' }}>█</span>
-              ))}
-              ] {Math.round(progress * 100)}%
-            </div>
-          )}
-          {terminalActive && !isGenerating && (
-            <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-              <span style={{ textShadow: '0 0 2px #00FF41, 0 0 6px #00FF41, 0 0 12px #00FF41', color: '#00FF41', fontFamily: 'Courier New, Courier, monospace', fontSize: '14px' }}>C:\SYNTH&gt; </span>
-              <span style={{ display: 'inline-block', width: '0.5em' }} />
-              <input
-                ref={inputRef}
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={handleInput}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  outline: 'none',
-                  color: '#00FF41',
-                  fontFamily: 'Courier New, Courier, monospace',
-                  fontSize: '14px',
-                  width: '60%',
-                  caretColor: '#00FF41',
-                  textAlign: 'left',
-                  textShadow: '0 0 2px #00FF41, 0 0 6px #00FF41, 0 0 12px #00FF41'
-                }}
-                autoFocus
-              />
-              <span className={styles.cursor} style={{ opacity: showCursor ? 1 : 0, marginLeft: 2, color: '#00FF41', textShadow: '0 0 2px #00FF41, 0 0 6px #00FF41, 0 0 12px #00FF41' }}>_</span>
-            </div>
-          )}
-        </div>
-      </div>
-      {/* Instrument Section will be refactored next */}
+          bootLines={bootLines}
+          isGenerating={isGenerating}
+          generatingProgress={progress}
+          active={terminalActive}
+          input={input}
+          setInput={setInput}
+          />
+      </Panel>
+
       <div
-        className="w-full flex flex-col items-center mt-8"
+        className="flex-1 w-full flex flex-col items-center mt-8"
         style={booting ? { opacity: 0.5, pointerEvents: 'none', userSelect: 'none' } : {}}
       >
         <VibeShifter sample={sample} />
