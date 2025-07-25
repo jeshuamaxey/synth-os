@@ -1,13 +1,12 @@
 /* Vibe Shifter Console Styles */
 
-.consoleContainer {
+/* .consoleContainer {
     height: 100vh;
     display: flex;
     flex-direction: column;
-    font-family: 'Courier New', Courier, monospace;
     background: #1a1a1a;
     color: #00ff41;
-}
+} */
 
 .terminalSection {
     height: 50vh;
@@ -61,13 +60,14 @@
     border: 3px solid #333;
     border-radius: 8px;
     padding: 20px;
-    font-size: 14px;
-    line-height: 1.4;
     overflow-y: auto;
     box-shadow: inset 0 0 30px rgba(0,255,65,0.1);
     position: relative;
-    color: #00ff41;
-    text-shadow: 0 0 2px #00FF41, 0 0 6px #00FF41, 0 0 12px #00FF41;
+    
+    /* color: #00ff41;
+    font-size: 14px;
+    line-height: 1.4;
+    text-shadow: 0 0 2px #00FF41, 0 0 6px #00FF41, 0 0 12px #00FF41; */
 }
 
 .terminalScreen::before {

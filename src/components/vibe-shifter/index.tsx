@@ -11,18 +11,23 @@ import { Panel, PanelGrid } from "@/components/panel";
 import WaveformGrid from "../waveform-editor/waveform-grid";
 import StatusIndicator from "../status-indicator";
 import ControlButton from "../control-button";
+import EllipsisSpinner from "../ellipsis-spinner";
 
 const notes = ['C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4', 'C5']
 
 const VibeShifter = ({ sample }: { sample: Sample | null }) => {
   const vibeShifterAudioRef = useRef<VibeShifterAudio | null>(null);
 
-  const { mutate: updateSample } = useSampleMutation();
+  const sampleMutation = useSampleMutation({});
 
   const update = () => {
     if (!vibeShifterAudio || !vibeShifterAudio.sample) return;
-    console.log('saving sample', vibeShifterAudio.sample)
-    updateSample({ id: vibeShifterAudio.sample.id, trimStart: vibeShifterAudio.trimStartMs, trimEnd: vibeShifterAudio.trimEndMs });
+
+    sampleMutation.mutate({
+      id: vibeShifterAudio.sample.id,
+      trimStart: vibeShifterAudio.trimStartMs,
+      trimEnd: vibeShifterAudio.trimEndMs,
+    });
   }
 
   useEffect(() => {
@@ -74,8 +79,12 @@ const VibeShifter = ({ sample }: { sample: Sample | null }) => {
         </div>
         <div className="flex justify-between items-center mt-4 text-sm">
           <StatusIndicator status="ok" label="sample loaded" />
-          <ControlButton onClick={() => vibeShifterAudio.play('C4')}>PREVIEW</ControlButton>
-          <ControlButton onClick={() => update()}>SAVE</ControlButton>
+          <div className="flex gap-2 items-center justify-end">  
+            <ControlButton onClick={() => vibeShifterAudio.play('C4')}>PREVIEW</ControlButton>
+            <ControlButton onClick={() => update()}>
+              {sampleMutation.isPending ? <EllipsisSpinner /> : 'SAVE'}
+            </ControlButton>
+          </div>
         </div>
       </Panel>
       <Panel header="KEYBOARD CONTROLLER">

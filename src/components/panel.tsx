@@ -3,7 +3,7 @@
 import { useState } from "react"
 
 export const PanelLight = ({ color, onClick }: { color: 'red' | 'yellow' | 'green', onClick: () => void }) => {
-  const panelClass = `
+  const panelLightClass = `
     rounded-full w-[10px] h-[10px] shadow-[0_0_5px_#000000A0]
   `
 
@@ -24,7 +24,7 @@ export const PanelLight = ({ color, onClick }: { color: 'red' | 'yellow' | 'gree
   }
 
   return (
-    <div className={`${panelClass} ${lightClass[color]}`} onClick={onClick}></div>
+    <div className={`${panelLightClass} ${lightClass[color]}`} onClick={onClick}></div>
   )
 }
 
@@ -46,9 +46,9 @@ export const Panel = ({ header, children }: { header: string, children: React.Re
             <PanelLight color="yellow" onClick={() => setCollapsed(true)} />
             <PanelLight color="green" onClick={() => setCollapsed(false)} />
           </div>
-          <div className="flex-1 text-right font-bold text-[#ccc] drop-shadow-lg tracking-wide">{header}</div>
+          <div className="flex-1 text-right font-bold font-mono text-[#ccc] drop-shadow-lg tracking-wide">{header}</div>
         </div>
-        {!collapsed && <div className="p-3 border-3 border-t-0 border-[#333] bg-gradient-to-br from-[#2a2a2a] to-[#1e1e1e]">{children}</div>}
+        {!collapsed && <div className="font-mono p-3 border-3 border-t-0 border-[#333] bg-gradient-to-br from-[#2a2a2a] to-[#1e1e1e]">{children}</div>}
       </div>
     </div>
   );

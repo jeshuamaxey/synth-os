@@ -1,3 +1,7 @@
+-- ------------------------------------------------------------
+-- AUDIO BUCKET
+-- ------------------------------------------------------------
+
 -- Create the audio bucket
 insert into storage.buckets (id, name, public) values ('audio', 'audio', true);
 
@@ -6,6 +10,10 @@ create policy "Anyone can upload to audio bucket"
 on storage.objects
 for insert
 with check (bucket_id = 'audio');
+
+-- ------------------------------------------------------------
+-- SAMPLES TABLE
+-- ------------------------------------------------------------
 
 -- Create the samples table
 create table if not exists public.samples (
@@ -28,7 +36,15 @@ create policy "Public read access to samples"
   using (true);
 
 -- Policy: Allow insert for authenticated users (customize as needed)
-create policy "Authenticated insert access to samples"
+create policy "Public insert access to samples"
   on public.samples
   for insert
   with check (true);
+
+-- Policy: Allow update for anyone
+create policy "Public update access to samples"
+  on public.samples
+  for update
+  using (true)
+  with check (true);
+

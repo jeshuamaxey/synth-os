@@ -77,6 +77,12 @@ export class VibeShifterAudio {
 
       if(sample) {
         this.sample = sample
+        this._trimStartMs = sample.trim_start || null
+        this._trimEndMs = sample.trim_end || null
+
+        console.log('sample', this.sample)
+        console.log('trimStartMs', this._trimStartMs)
+        console.log('trimEndMs', this._trimEndMs)
       }
 
     } else {

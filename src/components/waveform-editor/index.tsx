@@ -15,7 +15,6 @@ const WaveformEditor = ({ vibeShifterAudio }: { vibeShifterAudio: VibeShifterAud
   const [width, setWidth] = useState(300)
 
   useEffect(() => {
-    console.log('containerRef.current?.clientWidth', containerRef.current?.clientWidth)
     setWidth(containerRef.current?.clientWidth ?? 300)
   }, [])
 

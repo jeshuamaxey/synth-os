@@ -115,20 +115,35 @@ const VibeShifterTerminal = () => {
       setHistory(h => [...h, "No samples found."]);
       return;
     }
+    // Column widths
+    const colIdx = 2, colId = 16, colPrompt = 30, colTrim = 5;
     const pad = (str: string, len: number) => str.length >= len ? str.slice(0, len) : str + ' '.repeat(len - str.length);
-    const colName = 16, colPrompt = 30;
-    const header = `${pad('ID', colName)} | ${pad('PROMPT', colPrompt)}`;
-    const sep = `${'-'.repeat(colName)}-+-${'-'.repeat(colPrompt)}`;
-    const rows = (samples as Sample[]).map((s) => {
-      const name = s.id.slice(0, colName);
+    // Header and separator
+    const header = `${pad('#', colIdx)} | ${pad('ID', colId)} | ${pad('PROMPT', colPrompt)} | ${pad('START', colTrim)} | ${pad('END', colTrim)}`;
+    const sep = `${'-'.repeat(colIdx)} | ${'-'.repeat(colId)} | ${'-'.repeat(colPrompt)} | ${'-'.repeat(colTrim)} | ${'-'.repeat(colTrim)}`;
+    const rows = (samples as Sample[]).map((s, i) => {
+      const idx = pad(i.toString(), colIdx);
+      const name = s.id.slice(0, colId);
       const prompt = s.normalized_prompt || '';
-      return `${pad(name, colName)} | ${pad(prompt, colPrompt)}`;
+      const trimStart = s.trim_start !== null && s.trim_start !== undefined ? s.trim_start.toString() : '';
+      const trimEnd = s.trim_end !== null && s.trim_end !== undefined ? s.trim_end.toString() : '';
+      return `${pad(idx, colIdx)} | ${pad(name, colId)} | ${pad(prompt, colPrompt)} | ${pad(trimStart, colTrim)} | ${pad(trimEnd, colTrim)}`;
     });
     setHistory(h => [...h, header, sep, ...rows]);
   };
 
   const handleHelp = () => {
-    setHistory(h => [...h, "Available commands:", "  help", "  generate <description> <duration>", "  clear", "  ls"]);
+    setHistory(h => [
+      ...h,
+      "Available commands:",
+      "  help           Show this help message",
+      "  generate <description> <duration> Generate a sample",
+      "  clear          Clear the terminal",
+      "  ls             List all samples",
+      "  load <id>      Load a sample by ID (use 'ls' to list IDs)",
+      "  load           Load an example sample",
+      "  why            Why does this exist?"
+    ]);
   };
 
   const handleClear = () => {
@@ -150,8 +165,9 @@ const VibeShifterTerminal = () => {
     setIsGenerating(true);
     setSample(null);
     setHistory(h => [...h, `Generating sample: '${description}' (${duration}s)...`]);
-    for (let i = 0; i <= 20; i++) {
-      setProgress(i / 20);
+    const progressSteps = 20;
+    for (let i = 0; i <= progressSteps; i++) {
+      setProgress(i / (progressSteps+2));
       await sleep(80 + Math.random() * 60);
     }
     try {
@@ -159,6 +175,8 @@ const VibeShifterTerminal = () => {
         method: "POST",
         body: JSON.stringify({ prompt: description, duration })
       });
+      setProgress(1);
+      await sleep(500);
       const data = await response.json();
       setSample({
         id: data.id,
@@ -198,8 +216,10 @@ const VibeShifterTerminal = () => {
         await handleGenerate(args);
         break;
       case "load":
-        console.log("loading example")
-        await handleLoadExample();
+        await handleLoadSample(args[1] || 'example');
+        break;
+      case "why":
+        setHistory(h => [...h, "Because it was fun. Made by Jeshua Maxey"]);
         break;
       default:
         setHistory(h => [...h, `Unknown command: ${args[0]}`]);
@@ -248,8 +268,34 @@ const VibeShifterTerminal = () => {
     setHistory(h => [...h, "Example sample loaded. Keyboard and waveform activated."]);
   }
 
+  const handleLoadSample = async (id: string) => {
+    if(id === 'example') {
+      await handleLoadExample();
+      return;
+    }
+
+    const { data: samples } = await refetchSamples();
+    if (!samples || samples.length === 0) {
+      setHistory(h => [...h, "Sample not found."]);
+      return;
+    }
+    const sample = samples.find(s => s.id.startsWith(id));
+    if (!sample) {
+      setHistory(h => [...h, "Sample not found."]);
+      return;
+    }
+    setSample(sample);
+    setHistory(h => [...h, `Sample ${sample.id} loaded. Keyboard and waveform activated.`]);
+  }
+
+  const terminalText = `
+    font-mono
+    text-[oklch(0.8_0.25_142)] text-sm leading-[1.4]
+    [text-shadow:0_0_2px_oklch(0.8_0.25_142),0_0_6px_oklch(0.8_0.25_142),0_0_12px_oklch(0.8_0.25_142)]
+  `
+
   return (
-    <div className={styles.consoleContainer}>
+    <div className="h-full flex flex-col bg-[#1a1a1a] text-[#00ff41]">
       {/* Terminal Section */}
       <div className={styles.terminalSection}>
         <div className={styles.terminalHeader}>
@@ -261,7 +307,7 @@ const VibeShifterTerminal = () => {
           <div className={styles.terminalTitle}>SYNTH-OS v2.1</div>
         </div>
         <div
-          className={styles.terminalScreen}
+          className={`${styles.terminalScreen} ${terminalText}`}
           ref={terminalScreenRef}
           onClick={() => {
             if (inputRef.current) inputRef.current.focus();
@@ -275,7 +321,7 @@ const VibeShifterTerminal = () => {
               </>
             : bootLines.map((line, i) => <div key={i}>{line}</div>)}
           {/* Command history and output below boot text */}
-          {history.map((line, i) => <div key={i}>{line}</div>)}
+          {history.map((line, i) => <div key={i}><pre className={terminalText}>{line}</pre></div>)}
           {isGenerating && (
             <div className="text-ibm-green">
               [
