@@ -4,7 +4,7 @@ import KeyBoard from "@/components/keyboard";
 import WaveformEditor from "../waveform-editor";
 import { VibeShifterAudio } from "@/lib/audio/vibe-shifter";
 import { Sample } from "@/types/supabase";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSampleMutation } from "@/hooks/useSamples";
 import { Panel, PanelGrid } from "@/components/panel";
 import WaveformGrid from "../waveform-editor/waveform-grid";
@@ -16,6 +16,12 @@ const notes = ['C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', '
 
 const VibeShifter = ({ sample }: { sample: Sample | null }) => {
   const vibeShifterAudioRef = useRef<VibeShifterAudio | null>(null);
+
+  const [vibeShifterState, setVibeShifterState] = useState<{
+    nowPlayingNotes: string[]
+  }>({
+    nowPlayingNotes: []
+  })
 
   const sampleMutation = useSampleMutation({});
 
@@ -33,6 +39,13 @@ const VibeShifter = ({ sample }: { sample: Sample | null }) => {
     if (sample) {
       vibeShifterAudioRef.current = new VibeShifterAudio(sample, { debug: false });
       vibeShifterAudioRef.current.loadSample();
+
+      vibeShifterAudioRef.current.addEventListener('notesChanged', (payload: {notes: string[]}) => {
+        setVibeShifterState(prev => ({
+          ...prev,
+          nowPlayingNotes: payload.notes
+        }))
+      })
     } else {
       vibeShifterAudioRef.current = null;
     }
@@ -57,7 +70,7 @@ const VibeShifter = ({ sample }: { sample: Sample | null }) => {
         </Panel>
         <Panel className="basis-1/3" header="KEYBOARD CONTROLLER">
           <div className="flex justify-center my-4 h-32">
-            <KeyBoard notes={notes} onPress={() => {}} nowPlayingNotes={[]} />
+            <KeyBoard notes={notes} onPress={() => {}} />
           </div>
           <div className="flex justify-between items-center mt-4 text-sm">
             <div>OCTAVE: 4</div>
@@ -88,11 +101,10 @@ const VibeShifter = ({ sample }: { sample: Sample | null }) => {
       </Panel>
       <Panel className="basis-1/3" header="KEYBOARD CONTROLLER">
         <div className="flex justify-center my-4 h-32">
-          {vibeShifterAudio && <KeyBoard notes={notes} onPress={note => vibeShifterAudio.play(note)} nowPlayingNotes={vibeShifterAudio.nowPlayingNotes} />}
+          {vibeShifterAudio && <KeyBoard notes={notes} onPress={note => vibeShifterAudio.play(note)} />}
         </div>
         <div className="flex justify-between items-center mt-4 text-sm">
-          <div>OCTAVE: 4</div>
-          <div>VELOCITY: 80%</div>
+          <div>{JSON.stringify(vibeShifterState.nowPlayingNotes)}</div>
           <StatusIndicator status={vibeShifterAudio.isPlaying ? 'ok' : 'none'} label="playing" />
         </div>
       </Panel>

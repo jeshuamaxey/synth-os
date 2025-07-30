@@ -52,7 +52,6 @@ const Key = ({ note, onPress, isActive, style }: { note: string, onPress: () => 
 type KeyBoardProps = {
   notes: string[]
   onPress: (note: string) => void
-  nowPlayingNotes?: string[]
 }
 
 const KeyBoard = ({ notes, onPress }: KeyBoardProps) => {

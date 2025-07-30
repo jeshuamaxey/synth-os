@@ -23,11 +23,12 @@ function noteNameToMidi(note: string): number {
   return 12 * (octave + 1) + semitone
 }
 
-type VibeShiftEvent = 'play' | 'loaded'
+type VibeShiftEvent = 'play' | 'loaded' | 'notesChanged'
 type VibeShiftPlayListener = (payload: { note: string; startTime: number }) => void
 type VibeShiftLoadedListener = (payload: object) => void
+type VibeShiftNotesChangedListener = (payload: {notes: string[]}) => void
 
-type VibeShiftListener = VibeShiftPlayListener | VibeShiftLoadedListener
+type VibeShiftListener = VibeShiftPlayListener | VibeShiftLoadedListener | VibeShiftNotesChangedListener
 
 const DEFAULT_OPTIONS = {
   debug: false
@@ -45,12 +46,13 @@ export class VibeShifterAudio {
 
   private listeners: Record<VibeShiftEvent, VibeShiftListener[]> = {
     play: [],
-    loaded: []
+    loaded: [],
+    notesChanged: []
   }
 
   private _trimStartMs: number | null = null
   private _trimEndMs: number | null = null
-  private _nowPlayingNote: Map<string, boolean> = new Map()
+  public nowPlayingNotes:string[] = []
 
   constructor(
     sample: Sample | null = null,
@@ -139,10 +141,9 @@ export class VibeShifterAudio {
 
   /** Play a MIDI note (60 = C4). */
   async play(note: string): Promise<void> {
-    this._nowPlayingNote.set(note, true)
-
+    
     const TIMESTAMP_start = performance.now()
-
+    
     if (!this.ctx) {
       console.warn('VibeShifterAudio: cannot play note outside of browser'); return
     }
@@ -158,6 +159,9 @@ export class VibeShifterAudio {
     if(!this.sample) {
       console.warn('VibeShifterAudio: no sample to play'); return
     }
+
+    this.nowPlayingNotes.push(note)
+    this.dispatch('notesChanged', {notes: this.nowPlayingNotes})
 
     const TIMESTAMP_checks = performance.now()
 
@@ -212,7 +216,8 @@ export class VibeShifterAudio {
     this.dispatch('play', { note, startTime: this.startTime + startOffset })
 
     src.addEventListener('ended', () => {
-      this._nowPlayingNote.set(note, false)
+      this.nowPlayingNotes = this.nowPlayingNotes.filter(n => n !== note)
+      this.dispatch('notesChanged', {notes: this.nowPlayingNotes})
     })
   }
 
@@ -247,11 +252,7 @@ export class VibeShifterAudio {
   }
 
   get isPlaying(): boolean {
-    return this.startTime !== null && this.ctx?.currentTime !== undefined && this.ctx?.currentTime > this.startTime
-  }
-
-  get nowPlayingNotes(): string[] {
-    return Array.from(this._nowPlayingNote.keys()).filter(note => this._nowPlayingNote.get(note) === true)
+    return this.nowPlayingNotes.length > 0
   }
 
   log(message: string) {
