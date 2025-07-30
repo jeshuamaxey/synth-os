@@ -16,18 +16,30 @@ const Key = ({ note, onPress, isActive, style }: { note: string, onPress: () => 
   const blackKey = note.includes('#')
   const keyboardKey = getKeyFromNote(note)
 
-  const activeClasses = ["scale-95"]
-
+  
   const baseClass = `
-    p-2 rounded-b-md border border-black transition-all duration-100 text-xs
-    ${activeClasses.map(c => `active:${c}`).join(" ")}
+  p-2 border transition-all duration-100 text-xs
+  border border-terminal-pixel outline-none focus:outline-none active:outline-none
+  font-mono font-bold
+  ${blackKey ? "h-16 relative -left-4" : "h-24"}
+  `
+  
+  const blackKeyActiveClasses = ["bg-black", "text-terminal-pixel"]
+  const whiteKeyActiveClasses = ["bg-terminal-pixel", "text-black"]
+
+  const activeClasses = ["scale-95"].concat(blackKey ? blackKeyActiveClasses : whiteKeyActiveClasses)
+
+  const activeClass = `
     ${isActive ? activeClasses.join(" ") : ""}
   `
-  const whiteKeyClass = "bg-white h-24"
-  const blackKeyClass = "bg-blue-800 h-16 relative -left-4 text-white"
+
+  const inactiveWhiteKeyClass = "bg-transparent text-terminal-pixel"
+  const inactiveBlackKeyClass = "bg-terminal-pixel text-black"
+
+  const keyClass = isActive ? activeClass : blackKey ? inactiveBlackKeyClass: inactiveWhiteKeyClass
 
   return <button
-    className={`${baseClass} ${blackKey ? blackKeyClass : whiteKeyClass}`}
+    className={`${baseClass} ${activeClasses.map(c => `active:${c}`).join(" ")} ${keyClass}`}
     onClick={onPress}
     style={style}
   >
@@ -37,7 +49,13 @@ const Key = ({ note, onPress, isActive, style }: { note: string, onPress: () => 
   </button>
 }
 
-const KeyBoard = ({ notes, onPress }: { notes: string[], onPress: (note: string) => void }) => {
+type KeyBoardProps = {
+  notes: string[]
+  onPress: (note: string) => void
+  nowPlayingNotes: string[]
+}
+
+const KeyBoard = ({ notes, onPress, nowPlayingNotes }: KeyBoardProps) => {
   const downKeys = useKeyboardToNote(onPress)
 
   const WHITE_WIDTH = 40
@@ -50,8 +68,8 @@ const KeyBoard = ({ notes, onPress }: { notes: string[], onPress: (note: string)
 
   const depressedNotes = [...downKeys].map(key => KEY_TO_NOTE[key])
 
-  return <div className="relative">
-    <div className="flex">
+  return <div className="relative bg-black p-4 rounded-lg border-3 border-[#333]">    
+    <div className="flex relative z-10">
       {whiteKeys.map(note =>{
         const isDepressed = depressedNotes.includes(note)
         
@@ -64,7 +82,7 @@ const KeyBoard = ({ notes, onPress }: { notes: string[], onPress: (note: string)
         />
       })}
     </div>
-    <div className="absolute top-0 left-0 w-full">
+    <div className="absolute top-4 left-4 w-full z-20">
       {blackKeys.map((note, i) => {
         const offset = getBlackKeyOffset(note)
         const left = offset * WHITE_WIDTH + CENTER_OFFSET - (BLACK_WIDTH / 2) - (i * BLACK_WIDTH)

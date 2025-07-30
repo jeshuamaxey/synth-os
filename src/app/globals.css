@@ -42,7 +42,8 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --ibm-green: oklch(0.145 0 0);
+  --color-terminal-pixel: var(--terminal-pixel);
+  
 }
 
 :root {
@@ -78,6 +79,8 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  --terminal-pixel: oklch(0.8 0.25 142.5);
 }
 
 .dark {

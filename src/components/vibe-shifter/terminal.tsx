@@ -209,7 +209,7 @@ const VibeShifterTerminal = () => {
 
 
   return (
-    <div className="h-screen flex flex-col bg-[#1a1a1a] text-[#00ff41]">
+    <div className="h-screen flex flex-col bg-[#1a1a1a] text-terminal-pixel">
       <div className="flex-1 basis-1/2 min-h-0 max-h-1/2 overflow-y-hidden">
         <Panel header="SYNTH-OS v2.1" className="h-full w-full max-w-none flex flex-col">
           <TerminalScreen

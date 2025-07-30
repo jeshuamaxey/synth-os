@@ -50,14 +50,14 @@
     font-size: 12px;
 }
 
-.keyboard {
+/* .keyboard {
     display: flex;
     justify-content: center;
     margin: 20px 0;
     height: 120px;
-}
+} */
 
-.key {
+/* .key {
     position: relative;
     cursor: pointer;
     user-select: none;
@@ -110,7 +110,7 @@
 .blackKeyActive {
     background: linear-gradient(180deg, #00ff41, #00cc33);
     box-shadow: 0 0 15px #00ff41;
-}
+} */
 
 @media (max-width: 768px) {
     .whiteKey {

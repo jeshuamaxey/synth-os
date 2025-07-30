@@ -50,7 +50,7 @@ const TerminalScreen = forwardRef<HTMLDivElement, TerminalScreenProps>(({
 
   const terminalText = `
     font-mono
-    text-[oklch(0.8_0.25_142)] text-sm leading-[1.4]
+    text-terminal-pixel text-sm leading-[1.4]
     [text-shadow:0_0_2px_oklch(0.8_0.25_142),0_0_6px_oklch(0.8_0.25_142),0_0_12px_oklch(0.8_0.25_142)]
   `
 

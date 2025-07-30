@@ -50,6 +50,7 @@ export class VibeShifterAudio {
 
   private _trimStartMs: number | null = null
   private _trimEndMs: number | null = null
+  private _nowPlayingNote: Map<string, boolean> = new Map()
 
   constructor(
     sample: Sample | null = null,
@@ -138,6 +139,8 @@ export class VibeShifterAudio {
 
   /** Play a MIDI note (60 = C4). */
   async play(note: string): Promise<void> {
+    this._nowPlayingNote.set(note, true)
+
     const TIMESTAMP_start = performance.now()
 
     if (!this.ctx) {
@@ -207,6 +210,10 @@ export class VibeShifterAudio {
 
 
     this.dispatch('play', { note, startTime: this.startTime + startOffset })
+
+    src.addEventListener('ended', () => {
+      this._nowPlayingNote.set(note, false)
+    })
   }
 
   get trimmedDuration(): number {
@@ -241,6 +248,10 @@ export class VibeShifterAudio {
 
   get isPlaying(): boolean {
     return this.startTime !== null && this.ctx?.currentTime !== undefined && this.ctx?.currentTime > this.startTime
+  }
+
+  get nowPlayingNotes(): string[] {
+    return Array.from(this._nowPlayingNote.keys()).filter(note => this._nowPlayingNote.get(note) === true)
   }
 
   log(message: string) {

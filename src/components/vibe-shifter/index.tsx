@@ -4,7 +4,6 @@ import KeyBoard from "@/components/keyboard";
 import WaveformEditor from "../waveform-editor";
 import { VibeShifterAudio } from "@/lib/audio/vibe-shifter";
 import { Sample } from "@/types/supabase";
-import styles from "./vibe-shifter-console.module.css";
 import { useEffect, useRef } from "react";
 import { useSampleMutation } from "@/hooks/useSamples";
 import { Panel, PanelGrid } from "@/components/panel";
@@ -57,8 +56,8 @@ const VibeShifter = ({ sample }: { sample: Sample | null }) => {
           </div>
         </Panel>
         <Panel className="basis-1/3" header="KEYBOARD CONTROLLER">
-          <div className={styles.keyboard}>
-            <KeyBoard notes={notes} onPress={() => {}} />
+          <div className="flex justify-center my-4 h-32">
+            <KeyBoard notes={notes} onPress={() => {}} nowPlayingNotes={[]} />
           </div>
           <div className="flex justify-between items-center mt-4 text-sm">
             <div>OCTAVE: 4</div>
@@ -88,8 +87,8 @@ const VibeShifter = ({ sample }: { sample: Sample | null }) => {
         </div>
       </Panel>
       <Panel className="basis-1/3" header="KEYBOARD CONTROLLER">
-        <div className={styles.keyboard}>
-          {vibeShifterAudio && <KeyBoard notes={notes} onPress={note => vibeShifterAudio.play(note)} />}
+        <div className="flex justify-center my-4 h-32">
+          {vibeShifterAudio && <KeyBoard notes={notes} onPress={note => vibeShifterAudio.play(note)} nowPlayingNotes={vibeShifterAudio.nowPlayingNotes} />}
         </div>
         <div className="flex justify-between items-center mt-4 text-sm">
           <div>OCTAVE: 4</div>
