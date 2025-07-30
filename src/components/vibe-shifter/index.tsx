@@ -46,7 +46,7 @@ const VibeShifter = ({ sample }: { sample: Sample | null }) => {
   if (!vibeShifterAudio || !vibeShifterAudio.sample) {
     return (
       <PanelGrid>
-        <Panel header="WAVEFORM ANALYZER">
+        <Panel className="basis-1/3" header="WAVEFORM ANALYZER">
         <div className="bg-[#111] border-2 border-[#333] rounded relative overflow-hidden mb-4 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
             <WaveformGrid />
             <div style={{position: 'absolute', width: '100%', top: '50%', left: 0, textAlign: 'center', color: '#333', fontSize: 18, letterSpacing: 2}}>NO SIGNAL</div>
@@ -56,7 +56,7 @@ const VibeShifter = ({ sample }: { sample: Sample | null }) => {
             <StatusIndicator status="none" label="ready" />
           </div>
         </Panel>
-        <Panel header="KEYBOARD CONTROLLER">
+        <Panel className="basis-1/3" header="KEYBOARD CONTROLLER">
           <div className={styles.keyboard}>
             <KeyBoard notes={notes} onPress={() => {}} />
           </div>
@@ -72,7 +72,7 @@ const VibeShifter = ({ sample }: { sample: Sample | null }) => {
   
   return (
     <PanelGrid>
-      <Panel header="WAVEFORM ANALYZER">
+      <Panel className="basis-1/3" header="WAVEFORM ANALYZER">
         <div className="bg-[#111] border-2 border-[#333] rounded relative overflow-hidden mb-4 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
           <WaveformGrid />
           {vibeShifterAudio && <WaveformEditor vibeShifterAudio={vibeShifterAudio} />}
@@ -87,7 +87,7 @@ const VibeShifter = ({ sample }: { sample: Sample | null }) => {
           </div>
         </div>
       </Panel>
-      <Panel header="KEYBOARD CONTROLLER">
+      <Panel className="basis-1/3" header="KEYBOARD CONTROLLER">
         <div className={styles.keyboard}>
           {vibeShifterAudio && <KeyBoard notes={notes} onPress={note => vibeShifterAudio.play(note)} />}
         </div>

@@ -33,23 +33,29 @@ export const Panel = ({ header, className, children }: { header: string, classNa
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className={`${className}`}>
-      <div style={{ height: collapsed ? 'auto' : '100%', width: '100%' }}>
-        <div className={`
+    <div className={`flex flex-col h-full ${className || ''}`}>
+      <div
+        className={`
           flex items-center justify-between cursor-pointer
           border-b border-[#222] shadow
           font-bold
           bg-gradient-to-r from-[#444] via-[#666] to-[#444] text-[#ccc] px-4 py-2
-          `}>
-          <div className="flex gap-2">
-            <PanelLight color="red" onClick={() => {}} />
-            <PanelLight color="yellow" onClick={() => setCollapsed(true)} />
-            <PanelLight color="green" onClick={() => setCollapsed(false)} />
-          </div>
-          <div className="flex-1 text-right font-bold font-mono text-[#ccc] drop-shadow-lg tracking-wide">{header}</div>
+          sticky top-0 z-10
+        `}
+        style={{ minHeight: '44px' }}
+      >
+        <div className="flex gap-2">
+          <PanelLight color="red" onClick={() => {}} />
+          <PanelLight color="yellow" onClick={() => setCollapsed(true)} />
+          <PanelLight color="green" onClick={() => setCollapsed(false)} />
         </div>
-        {!collapsed && <div className="font-mono p-3 border-3 border-t-0 border-[#333] bg-gradient-to-br from-[#2a2a2a] to-[#1e1e1e]">{children}</div>}
+        <div className="flex-1 text-right font-bold font-mono text-[#ccc] drop-shadow-lg tracking-wide">{header}</div>
       </div>
+      {!collapsed && (
+        <div className="flex-1 min-h-0 overflow-y-auto font-mono p-3 border-3 border-t-0 border-[#333] bg-gradient-to-br from-[#2a2a2a] to-[#1e1e1e]">
+          {children}
+        </div>
+      )}
     </div>
   );
 };

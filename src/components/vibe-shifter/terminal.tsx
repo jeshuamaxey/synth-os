@@ -209,32 +209,32 @@ const VibeShifterTerminal = () => {
 
 
   return (
-    <div className="h-full min-h-screen max-h-screen flex flex-col bg-[#1a1a1a] text-[#00ff41]">
-
-      <Panel header="SYNTH-OS v2.1" className="flex-1 h-1/2 w-full max-w-none ">
-        <TerminalScreen
-          ref={terminalScreenRef}
-          inputRef={inputRef}
-          onKeyDown={handleInput}
-          onChange={e => setInput(e.target.value)}
-          booting={booting}
-          history={history}
-          onBootComplete={(lines) => {
-            setTerminalActive(true);
-            setBooting(false);
-            setBootLines(lines);
-          }}
-          bootLines={bootLines}
-          isGenerating={isGenerating}
-          generatingProgress={progress}
-          active={terminalActive}
-          input={input}
-          setInput={setInput}
+    <div className="h-screen flex flex-col bg-[#1a1a1a] text-[#00ff41]">
+      <div className="flex-1 basis-1/2 min-h-0 max-h-1/2 overflow-y-hidden">
+        <Panel header="SYNTH-OS v2.1" className="h-full w-full max-w-none flex flex-col">
+          <TerminalScreen
+            ref={terminalScreenRef}
+            inputRef={inputRef}
+            onKeyDown={handleInput}
+            onChange={e => setInput(e.target.value)}
+            booting={booting}
+            history={history}
+            onBootComplete={(lines) => {
+              setTerminalActive(true);
+              setBooting(false);
+              setBootLines(lines);
+            }}
+            bootLines={bootLines}
+            isGenerating={isGenerating}
+            generatingProgress={progress}
+            active={terminalActive}
+            input={input}
+            setInput={setInput}
           />
-      </Panel>
-
+        </Panel>
+      </div>
       <div
-        className="flex-1 w-full flex flex-col items-center mt-8"
+        className="flex-1 basis-1/2 min-h-0 max-h-1/2 overflow-y-auto flex flex-col items-center mt-8"
         style={booting ? { opacity: 0.5, pointerEvents: 'none', userSelect: 'none' } : {}}
       >
         <VibeShifter sample={sample} />

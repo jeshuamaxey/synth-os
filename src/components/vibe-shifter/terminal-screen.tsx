@@ -119,7 +119,7 @@ const TerminalScreen = forwardRef<HTMLDivElement, TerminalScreenProps>(({
     if (ref && 'current' in ref && ref.current) {
       ref.current.scrollTop = ref.current.scrollHeight;
     }
-  }, [history, bootLines, isGenerating, ref]);
+  }, [ref]);
 
   return (
     <div
