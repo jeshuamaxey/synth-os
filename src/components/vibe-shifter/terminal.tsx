@@ -104,6 +104,7 @@ const VibeShifterTerminal = () => {
         trim_start: data.trim_start,
         trim_end: data.trim_end,
         normalized_prompt: description,
+        is_example: false,
         created_at: null
       });
       setHistory(h => [...h, "Sample ready. Keyboard and waveform activated."]);
@@ -175,16 +176,18 @@ const VibeShifterTerminal = () => {
   };
 
   const handleLoadExample = async () => {
-    setSample({
-      "id": "966b2915-be13-409a-b452-588ccee52b21",
-      "normalized_prompt": "the_ding_of_a_receptionists_bell",
-      "public_url": "http://127.0.0.1:54321/storage/v1/object/public/audio/the_ding_of_a_receptionists_bell.mp3",
-      "root_midi": 60,
-      "trim_start": null,
-      "trim_end": null,
-      "created_at": "2025-07-24T16:12:51.071267+00:00"
-    })
-    setHistory(h => [...h, "Example sample loaded. Keyboard and waveform activated."]);
+    const { data: samples } = await refetchSamples();
+    if (!samples || samples.length === 0) {
+      setHistory(h => [...h, "Sample not found."]);
+      return;
+    }
+    const sample = samples.find(s => s.is_example);
+    if (!sample) {
+      setHistory(h => [...h, "Sample not found."]);
+      return;
+    }
+    setSample(sample);
+    setHistory(h => [...h, `Example sample '${sample?.normalized_prompt}' loaded. Keyboard and waveform activated.`]);
   }
 
   const handleLoadSample = async (id: string) => {

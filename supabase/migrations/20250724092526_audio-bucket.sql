@@ -11,6 +11,13 @@ on storage.objects
 for insert
 with check (bucket_id = 'audio');
 
+-- Allow anyone to read files from the audio bucket
+create policy "Anyone can read from audio bucket"
+on storage.objects
+for select
+using (bucket_id = 'audio');
+
+
 -- ------------------------------------------------------------
 -- SAMPLES TABLE
 -- ------------------------------------------------------------
@@ -23,6 +30,7 @@ create table if not exists public.samples (
   root_midi integer not null default 60,
   trim_start integer,
   trim_end integer,
+  is_example boolean not null default false,
   created_at timestamp with time zone default now()
 );
 
