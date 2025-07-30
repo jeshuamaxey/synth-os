@@ -52,10 +52,10 @@ const Key = ({ note, onPress, isActive, style }: { note: string, onPress: () => 
 type KeyBoardProps = {
   notes: string[]
   onPress: (note: string) => void
-  nowPlayingNotes: string[]
+  nowPlayingNotes?: string[]
 }
 
-const KeyBoard = ({ notes, onPress, nowPlayingNotes }: KeyBoardProps) => {
+const KeyBoard = ({ notes, onPress }: KeyBoardProps) => {
   const downKeys = useKeyboardToNote(onPress)
 
   const WHITE_WIDTH = 40
