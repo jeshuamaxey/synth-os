@@ -1,8 +1,6 @@
 "use client"
 
-import { VibeShifterAudio } from "@/lib/audio/vibe-shifter";
-
-const ButtonGrid = ({ vibeShifterAudio }: { vibeShifterAudio: VibeShifterAudio }) => {
+const ButtonGrid = () => {
   const buttons = [
     {
       label: '1',
