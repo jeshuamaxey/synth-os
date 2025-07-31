@@ -1,15 +1,7 @@
-import Link from "next/link";
+import VibeShifterTerminal from "@/components/vibe-shifter/terminal";
 
-export default function Home() {
-  return (
-    <div className="flex flex-col items-center justify-center h-screen">
-      <h1>11 labs</h1>
-      <Link
-        className="text-blue-500 hover:underline"
-        href="/vibe-shifter"
-      >
-        Play the Vibe Shifter
-      </Link>
-    </div>
-  );
-}
+const VibeShifterPage = () => {
+  return <VibeShifterTerminal />;
+};
+
+export default VibeShifterPage;
