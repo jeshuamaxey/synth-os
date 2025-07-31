@@ -16,20 +16,24 @@ export const KEY_TO_NOTE: Record<string, string> = {
   k: 'C5'
 }
 
-export function useKeyboardToNote(onNote: (note: string) => void): Set<string> {
+export function useKeyboardToNote(onNote: (note: string) => void, enabled: boolean = true): Set<string> {
   const [downKeys, setDownKeys] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (!enabled) return
+
       const note = KEY_TO_NOTE[e.key]
       if (!note) return
       if (downKeys.has(e.key)) return // prevent retrigger on hold
-
+      
       setDownKeys(prev => new Set(prev).add(e.key))
       onNote(note)
     }
-
+    
     const handleKeyUp = (e: KeyboardEvent) => {
+      if (!enabled) return
+
       setDownKeys(prev => {
         const next = new Set(prev)
         next.delete(e.key)
@@ -44,7 +48,7 @@ export function useKeyboardToNote(onNote: (note: string) => void): Set<string> {
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
     }
-  }, [onNote, downKeys])
+  }, [onNote, downKeys, enabled])
 
   return downKeys
 }

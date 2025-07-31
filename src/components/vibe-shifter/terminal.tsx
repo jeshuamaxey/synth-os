@@ -11,7 +11,6 @@ import { sleep } from "@/lib/utils";
 
 const VibeShifterTerminal = () => {
   // bootStage, typedLines, currentLine are no longer needed
-  const [terminalActive, setTerminalActive] = useState(false);
   const [booting, setBooting] = useState(true);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
@@ -26,6 +25,8 @@ const VibeShifterTerminal = () => {
   const terminalScreenRef = useRef<HTMLDivElement>(null);
 
   const { refetch: refetchSamples } = useSamples();
+
+  const [keyboardControlsEnabled, setKeyboardControlsEnabled] = useState(false);
 
   // Command handlers
   const handleLs = async () => {
@@ -210,6 +211,12 @@ const VibeShifterTerminal = () => {
     setHistory(h => [...h, `Sample ${sample.id} loaded. Keyboard and waveform activated.`]);
   }
 
+  const focusInput = () => {
+    if (inputRef.current) inputRef.current.focus();
+
+    console.log('focusInput');
+    setKeyboardControlsEnabled(false);
+  }
 
   return (
     <div className="h-screen flex flex-col bg-[#1a1a1a] text-terminal-pixel">
@@ -218,21 +225,20 @@ const VibeShifterTerminal = () => {
           <TerminalScreen
             ref={terminalScreenRef}
             inputRef={inputRef}
+            focusInput={focusInput}
+            input={input}
+            setInput={setInput}
             onKeyDown={handleInput}
             onChange={e => setInput(e.target.value)}
             booting={booting}
             history={history}
             onBootComplete={(lines) => {
-              setTerminalActive(true);
               setBooting(false);
               setBootLines(lines);
             }}
             bootLines={bootLines}
             isGenerating={isGenerating}
             generatingProgress={progress}
-            active={terminalActive}
-            input={input}
-            setInput={setInput}
           />
         </Panel>
       </div>
@@ -240,7 +246,7 @@ const VibeShifterTerminal = () => {
         className="flex-1 basis-1/2 min-h-0 max-h-1/2 overflow-y-auto flex flex-col items-center mt-8"
         style={booting ? { opacity: 0.5, pointerEvents: 'none', userSelect: 'none' } : {}}
       >
-        <VibeShifter sample={sample} />
+        <VibeShifter sample={sample} keyboardControlsEnabled={keyboardControlsEnabled} setKeyboardControlsEnabled={setKeyboardControlsEnabled} />
       </div>
     </div>
   );

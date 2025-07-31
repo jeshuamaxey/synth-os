@@ -14,10 +14,16 @@ import EllipsisSpinner from "../ellipsis-spinner";
 
 const notes = ['C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4', 'C5']
 
-const VibeShifter = ({ sample }: { sample: Sample | null }) => {
+type VibeShifterProps = {
+  sample: Sample | null
+  keyboardControlsEnabled: boolean
+  setKeyboardControlsEnabled: (enabled: boolean) => void
+}
+
+const VibeShifter = ({ sample, keyboardControlsEnabled, setKeyboardControlsEnabled }: VibeShifterProps) => {
   const vibeShifterAudioRef = useRef<VibeShifterAudio | null>(null);
 
-  const [vibeShifterState, setVibeShifterState] = useState<{
+  const [, setVibeShifterState] = useState<{
     nowPlayingNotes: string[]
   }>({
     nowPlayingNotes: []
@@ -70,11 +76,10 @@ const VibeShifter = ({ sample }: { sample: Sample | null }) => {
         </Panel>
         <Panel className="basis-1/3" header="KEYBOARD CONTROLLER">
           <div className="flex justify-center my-4 h-32">
-            <KeyBoard notes={notes} onPress={() => {}} />
+            <KeyBoard notes={notes} onPress={() => {}} enabled={false} />
           </div>
           <div className="flex justify-between items-center mt-4 text-sm">
-            <div>OCTAVE: 4</div>
-            <div>VELOCITY: --</div>
+            <StatusIndicator status="none" label="enabled" />
             <StatusIndicator status="none" label="playing" />
           </div>
         </Panel>
@@ -101,10 +106,10 @@ const VibeShifter = ({ sample }: { sample: Sample | null }) => {
       </Panel>
       <Panel className="basis-1/3" header="KEYBOARD CONTROLLER">
         <div className="flex justify-center my-4 h-32">
-          {vibeShifterAudio && <KeyBoard notes={notes} onPress={note => vibeShifterAudio.play(note)} />}
+          {vibeShifterAudio && <KeyBoard notes={notes} onPress={note => vibeShifterAudio.play(note)} enabled={keyboardControlsEnabled} />}
         </div>
         <div className="flex justify-between items-center mt-4 text-sm">
-          <div>{JSON.stringify(vibeShifterState.nowPlayingNotes)}</div>
+          <StatusIndicator onClick={() => setKeyboardControlsEnabled(!keyboardControlsEnabled)} status={keyboardControlsEnabled ? 'ok' : 'error'} label="enabled" />
           <StatusIndicator status={vibeShifterAudio.isPlaying ? 'ok' : 'none'} label="playing" />
         </div>
       </Panel>

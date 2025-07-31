@@ -52,10 +52,11 @@ const Key = ({ note, onPress, isActive, style }: { note: string, onPress: () => 
 type KeyBoardProps = {
   notes: string[]
   onPress: (note: string) => void
+  enabled: boolean
 }
 
-const KeyBoard = ({ notes, onPress }: KeyBoardProps) => {
-  const downKeys = useKeyboardToNote(onPress)
+const KeyBoard = ({ notes, onPress, enabled }: KeyBoardProps) => {
+  const downKeys = useKeyboardToNote(onPress, enabled)
 
   const WHITE_WIDTH = 40
   const BLACK_WIDTH = 24

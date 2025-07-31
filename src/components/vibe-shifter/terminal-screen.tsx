@@ -5,6 +5,7 @@ import { forwardRef, useEffect, useState } from "react";
 
 interface TerminalScreenProps {
   booting: boolean;
+  focusInput: () => void;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   history: string[];
@@ -12,7 +13,6 @@ interface TerminalScreenProps {
   bootLines: string[];
   isGenerating: boolean;
   generatingProgress: number;
-  active: boolean;
   input: string;
   setInput: (input: string) => void;
   onBootComplete: (lines: string[]) => void;
@@ -40,10 +40,10 @@ const TerminalScreen = forwardRef<HTMLDivElement, TerminalScreenProps>(({
     booting,
     history,
     inputRef,
+    focusInput,
     bootLines,
     isGenerating,
     generatingProgress,
-    active,
     input,
     onBootComplete
   }, ref) => {
@@ -66,24 +66,14 @@ const TerminalScreen = forwardRef<HTMLDivElement, TerminalScreenProps>(({
     ${terminalText}
   `
 
+  const [active, setActive] = useState(false);
   const [bootTypingLines, setBootTypingLines] = useState<string[]>([]);
   const [bootTypingCurrentLine, setBootTypingCurrentLine] = useState<string>("");
 
   // Boot sequence
   useEffect(() => {
     (async () => {
-      // Play boot-up sound
-      // if (!bootAudioRef.current) {
-      //   bootAudioRef.current = new Audio("/audio/boot-up.mp3");
-      //   bootAudioRef.current.volume = 0.7;
-      // }
-      // bootAudioRef.current.currentTime = 0;
-      // bootAudioRef.current.play();
-      // setBootStage(0); // black
       await sleep(1200);
-      // setBootStage(1); // crt flicker
-      await sleep(800);
-      // setBootStage(2); // boot text
       // Type out boot text
       const lines: string[] = [];
       for (let i = 0; i < BOOT_TEXT.length; i++) {
@@ -104,15 +94,9 @@ const TerminalScreen = forwardRef<HTMLDivElement, TerminalScreenProps>(({
       setBootTypingLines([]);
       setBootTypingCurrentLine("");
       onBootComplete([...lines])
+      setActive(true);
     })();
   }, [onBootComplete]);
-
-  // Focus input when terminal is active
-  useEffect(() => {
-    if (active && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [active, inputRef]);
 
   // Scroll terminal to bottom when output changes
   useEffect(() => {
@@ -125,9 +109,7 @@ const TerminalScreen = forwardRef<HTMLDivElement, TerminalScreenProps>(({
     <div
       className={terminalScreenClass}
       ref={ref}
-      onClick={() => {
-        if (inputRef.current) inputRef.current.focus();
-      }}
+      onClick={() => focusInput()}
     >
       {/* Boot text stays at the top, animate in during boot character by character */}
       {booting
