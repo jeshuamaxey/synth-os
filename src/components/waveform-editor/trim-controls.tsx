@@ -8,12 +8,11 @@ type Props = {
   duration: number
   startMs: number
   endMs: number
-  setStartMs: (startMs: number) => void
-  setEndMs: (endMs: number) => void
+  setTrim: ({trimStartMs, trimEndMs}: {trimStartMs: number, trimEndMs: number}) => void
   width: number
 }
 
-export function TrimControls({ duration, startMs, endMs, setStartMs, setEndMs, width }: Props) {
+export function TrimControls({ duration, startMs, endMs, setTrim, width }: Props) {
 
   return (
     <div className="h-6" style={{ width: `${width}px` }}>
@@ -24,8 +23,7 @@ export function TrimControls({ duration, startMs, endMs, setStartMs, setEndMs, w
         step={1}
         value={[startMs, endMs]}
         onInput={([start, end]) => {
-          setStartMs(start)
-          setEndMs(end)
+          setTrim({trimStartMs: start, trimEndMs: end})
         }}
         className="w-full"
       />

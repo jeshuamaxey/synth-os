@@ -2,15 +2,15 @@
 
 import KeyBoard from "@/components/keyboard";
 import WaveformEditor from "../waveform-editor";
-import { VibeShifterAudio } from "@/lib/audio/vibe-shifter";
 import { Sample } from "@/types/supabase";
-import { useEffect, useRef, useState } from "react";
 import { useSampleMutation } from "@/hooks/useSamples";
 import { Panel, PanelGrid } from "@/components/panel";
 import WaveformGrid from "../waveform-editor/waveform-grid";
 import StatusIndicator from "../status-indicator";
 import ControlButton from "../control-button";
 import EllipsisSpinner from "../ellipsis-spinner";
+import { VibeShifterProvider, useVibeShifter } from "@/providers/vibe-shifter-provider";
+import { useIsPlaying } from "@/hooks/useVibeShifterState";
 
 const notes = ['C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4', 'C5']
 
@@ -20,16 +20,10 @@ type VibeShifterProps = {
   setKeyboardControlsEnabled: (enabled: boolean) => void
 }
 
-const VibeShifter = ({ sample, keyboardControlsEnabled, setKeyboardControlsEnabled }: VibeShifterProps) => {
-  const vibeShifterAudioRef = useRef<VibeShifterAudio | null>(null);
-
+const VibeShifterContent = ({ keyboardControlsEnabled, setKeyboardControlsEnabled }: Omit<VibeShifterProps, 'sample'>) => {
+  const { engine: vibeShifterAudio } = useVibeShifter();
+  const isPlaying = useIsPlaying();
   const waveformHeight = 100
-
-  const [, setVibeShifterState] = useState<{
-    nowPlayingNotes: string[]
-  }>({
-    nowPlayingNotes: []
-  })
 
   const sampleMutation = useSampleMutation({});
 
@@ -43,25 +37,6 @@ const VibeShifter = ({ sample, keyboardControlsEnabled, setKeyboardControlsEnabl
     });
   }
 
-  useEffect(() => {
-    if (sample) {
-      vibeShifterAudioRef.current = new VibeShifterAudio(sample, { debug: false });
-      vibeShifterAudioRef.current.loadSample();
-
-      vibeShifterAudioRef.current.addEventListener('notesChanged', (payload: {notes: string[]}) => {
-        setVibeShifterState(prev => ({
-          ...prev,
-          nowPlayingNotes: payload.notes
-        }))
-      })
-    } else {
-      vibeShifterAudioRef.current = null;
-    }
-  }, [sample]);
-
-  
-  const vibeShifterAudio = vibeShifterAudioRef.current;
-  
   // Inactive state
   if (!vibeShifterAudio || !vibeShifterAudio.sample) {
     return (
@@ -111,11 +86,22 @@ const VibeShifter = ({ sample, keyboardControlsEnabled, setKeyboardControlsEnabl
         </div>
         <div className="flex justify-between items-center mt-4 text-sm">
           <StatusIndicator onClick={() => setKeyboardControlsEnabled(!keyboardControlsEnabled)} status={keyboardControlsEnabled ? 'ok' : 'error'} label={keyboardControlsEnabled ? 'keys enabled' : 'keys disabled'} />
-          <StatusIndicator status={vibeShifterAudio.isPlaying ? 'ok' : 'none'} label="playing" />
+          <StatusIndicator status={isPlaying ? 'ok' : 'none'} label="playing" />
         </div>
       </Panel>
     </PanelGrid>
   )
 }
+
+const VibeShifter = ({ sample, keyboardControlsEnabled, setKeyboardControlsEnabled }: VibeShifterProps) => {
+  return (
+    <VibeShifterProvider sample={sample}>
+      <VibeShifterContent 
+        keyboardControlsEnabled={keyboardControlsEnabled} 
+        setKeyboardControlsEnabled={setKeyboardControlsEnabled} 
+      />
+    </VibeShifterProvider>
+  );
+};
 
 export default VibeShifter;

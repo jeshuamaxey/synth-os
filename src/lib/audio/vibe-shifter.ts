@@ -23,12 +23,13 @@ function noteNameToMidi(note: string): number {
   return 12 * (octave + 1) + semitone
 }
 
-type VibeShiftEvent = 'play' | 'loaded' | 'notesChanged'
+type VibeShiftEvent = 'play' | 'loaded' | 'notesChanged' | 'trimChanged'
 type VibeShiftPlayListener = (payload: { note: string; startTime: number }) => void
 type VibeShiftLoadedListener = (payload: object) => void
 type VibeShiftNotesChangedListener = (payload: {notes: string[]}) => void
+type VibeShiftTrimChangedListener = (payload: {trimStartMs: number, trimEndMs: number}) => void
 
-type VibeShiftListener = VibeShiftPlayListener | VibeShiftLoadedListener | VibeShiftNotesChangedListener
+type VibeShiftListener = VibeShiftPlayListener | VibeShiftLoadedListener | VibeShiftNotesChangedListener | VibeShiftTrimChangedListener
 
 const DEFAULT_OPTIONS = {
   debug: false
@@ -47,7 +48,8 @@ export class VibeShifterAudio {
   private listeners: Record<VibeShiftEvent, VibeShiftListener[]> = {
     play: [],
     loaded: [],
-    notesChanged: []
+    notesChanged: [],
+    trimChanged: []
   }
 
   private _trimStartMs: number | null = null
@@ -245,10 +247,12 @@ export class VibeShifterAudio {
 
   set trimStartMs(value: number) {
     this._trimStartMs = value
+    this.dispatch('trimChanged', { trimStartMs: this.trimStartMs, trimEndMs: this.trimEndMs })
   }
 
   set trimEndMs(value: number) {
     this._trimEndMs = value
+    this.dispatch('trimChanged', { trimStartMs: this.trimStartMs, trimEndMs: this.trimEndMs })
   }
 
   get isPlaying(): boolean {

@@ -4,12 +4,14 @@ import { useState, useEffect, useRef } from 'react'
 import { VibeShifterAudio } from "@/lib/audio/vibe-shifter"
 import Waveform from "./waveform"
 import { TrimControls } from "./trim-controls"
+import { useTrimState } from '@/hooks/useVibeShifterState'
 
 const WaveformEditor = ({ vibeShifterAudio, waveformHeight = 100 }: { vibeShifterAudio: VibeShifterAudio, waveformHeight?: number }) => {
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const [startMs, setStartMs] = useState(vibeShifterAudio.trimStartMs)
-  const [endMs, setEndMs] = useState(vibeShifterAudio.trimEndMs)
+  // const [startMs, setStartMs] = useState(vibeShifterAudio.trimStartMs)
+  // const [endMs, setEndMs] = useState(vibeShifterAudio.trimEndMs)
+  const [trimState, setTrimState] = useTrimState()
   const [duration, setDuration] = useState(0)
   const [trimmedDuration, setTrimmedDuration] = useState(0)
   const [width, setWidth] = useState(300)
@@ -19,18 +21,18 @@ const WaveformEditor = ({ vibeShifterAudio, waveformHeight = 100 }: { vibeShifte
   }, [])
 
   // Sync local state to the vibe instance
-  useEffect(() => {
-    vibeShifterAudio.trimStartMs = startMs
-  }, [startMs, vibeShifterAudio])
+  // useEffect(() => {
+  //   vibeShifterAudio.trimStartMs = startMs
+  // }, [startMs, vibeShifterAudio])
 
-  useEffect(() => {
-    vibeShifterAudio.trimEndMs = endMs
-  }, [endMs, vibeShifterAudio])
+  // useEffect(() => {
+  //   vibeShifterAudio.trimEndMs = endMs
+  // }, [endMs, vibeShifterAudio])
 
   useEffect(() => {
     vibeShifterAudio.addEventListener('loaded', () => {
-      setStartMs(vibeShifterAudio.trimStartMs)
-      setEndMs(vibeShifterAudio.trimEndMs)
+      // setStartMs(vibeShifterAudio.trimStartMs)
+      // setEndMs(vibeShifterAudio.trimEndMs)
       setDuration(vibeShifterAudio.duration ?? 0)
     })
   }, [vibeShifterAudio])
@@ -50,7 +52,13 @@ const WaveformEditor = ({ vibeShifterAudio, waveformHeight = 100 }: { vibeShifte
         </div>
       </div>
     </div>
-    <TrimControls duration={duration} startMs={startMs} endMs={endMs} setStartMs={setStartMs} setEndMs={setEndMs} width={width} />
+    <TrimControls
+      duration={duration}
+      startMs={trimState?.trimStartMs ?? 0}
+      endMs={trimState?.trimEndMs ?? 0}
+      setTrim={trimState => setTrimState(trimState)}
+      width={width}
+      />
   </div>
 }
 
