@@ -110,7 +110,7 @@ const VibeShifter = ({ sample, keyboardControlsEnabled, setKeyboardControlsEnabl
           {vibeShifterAudio && <KeyBoard notes={notes} onPress={note => vibeShifterAudio.play(note)} enabled={keyboardControlsEnabled} />}
         </div>
         <div className="flex justify-between items-center mt-4 text-sm">
-          <StatusIndicator onClick={() => setKeyboardControlsEnabled(!keyboardControlsEnabled)} status={keyboardControlsEnabled ? 'ok' : 'error'} label="enabled" />
+          <StatusIndicator onClick={() => setKeyboardControlsEnabled(!keyboardControlsEnabled)} status={keyboardControlsEnabled ? 'ok' : 'error'} label={keyboardControlsEnabled ? 'keys enabled' : 'keys disabled'} />
           <StatusIndicator status={vibeShifterAudio.isPlaying ? 'ok' : 'none'} label="playing" />
         </div>
       </Panel>

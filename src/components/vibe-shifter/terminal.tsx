@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import VibeShifter from ".";
 import { Sample } from "@/types/supabase";
 import { useSamples } from '@/hooks/useSamples';
@@ -238,10 +238,10 @@ const VibeShifterTerminal = () => {
             }}
             booting={booting}
             history={history}
-            onBootComplete={(lines) => {
+            onBootComplete={useCallback((lines: string[]) => {
               setBooting(false);
               setBootLines(lines);
-            }}
+            }, [])}
             bootLines={bootLines}
             isGenerating={isGenerating}
             generatingProgress={progress}
