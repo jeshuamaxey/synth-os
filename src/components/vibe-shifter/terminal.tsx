@@ -229,10 +229,16 @@ const VibeShifterTerminal = () => {
             input={input}
             setInput={setInput}
             onKeyDown={handleInput}
-            onChange={e => setInput(e.target.value)}
+            onChange={e => {
+              let i = e.target.value
+              // make first letter of i lowercase
+              i = i.charAt(0).toLowerCase() + i.slice(1)
+              setInput(i)
+            }}
             booting={booting}
             history={history}
             onBootComplete={(lines) => {
+              console.log('onBootComplete')
               setBooting(false);
               setBootLines(lines);
             }}
