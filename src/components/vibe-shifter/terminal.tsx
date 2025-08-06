@@ -60,7 +60,7 @@ const VibeShifterTerminal = () => {
       "  generate <description> <duration> Generate a sample",
       "  clear          Clear the terminal",
       "  ls             List all samples",
-      "  load <id>      Load a sample by ID (use 'ls' to list IDs)",
+      "  load <id>      Load a sample by ID. Partial IDs are supported. Use 'ls' to list IDs",
       "  load           Load an example sample",
       "  why            Why does this exist?"
     ]);
@@ -178,6 +178,7 @@ const VibeShifterTerminal = () => {
 
   const handleLoadExample = async () => {
     const { data: samples } = await refetchSamples();
+    console.log('samples', samples);
     if (!samples || samples.length === 0) {
       setHistory(h => [...h, "Sample not found."]);
       return;
@@ -238,7 +239,6 @@ const VibeShifterTerminal = () => {
             booting={booting}
             history={history}
             onBootComplete={(lines) => {
-              console.log('onBootComplete')
               setBooting(false);
               setBootLines(lines);
             }}

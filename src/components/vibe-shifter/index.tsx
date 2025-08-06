@@ -23,6 +23,8 @@ type VibeShifterProps = {
 const VibeShifter = ({ sample, keyboardControlsEnabled, setKeyboardControlsEnabled }: VibeShifterProps) => {
   const vibeShifterAudioRef = useRef<VibeShifterAudio | null>(null);
 
+  const waveformHeight = 100
+
   const [, setVibeShifterState] = useState<{
     nowPlayingNotes: string[]
   }>({
@@ -65,17 +67,16 @@ const VibeShifter = ({ sample, keyboardControlsEnabled, setKeyboardControlsEnabl
     return (
       <PanelGrid>
         <Panel className="basis-1/3" header="WAVEFORM ANALYZER">
-        <div className="bg-[#111] border-2 border-[#333] rounded relative overflow-hidden mb-4 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
+        <div style={{height: waveformHeight}} className="flex justify-between my-4 h-32 bg-[#111] rounded-lg border-3 border-[#333] relative overflow-hidden mb-4 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
             <WaveformGrid />
-            <div style={{position: 'absolute', width: '100%', top: '50%', left: 0, textAlign: 'center', color: '#333', fontSize: 18, letterSpacing: 2}}>NO SIGNAL</div>
+            <div style={{position: 'absolute', width: '100%', top: '40%', left: 0, textAlign: 'center', color: '#333', fontSize: 18, letterSpacing: 2}}>NO SIGNAL</div>
           </div>
           <div className="flex justify-between items-center mt-4 text-sm">
-            <StatusIndicator status="none" label="sample loaded" />
-            <StatusIndicator status="none" label="ready" />
+            <StatusIndicator status="none" label="no sample" />
           </div>
         </Panel>
         <Panel className="basis-1/3" header="KEYBOARD CONTROLLER">
-          <div className="flex justify-center my-4 h-32">
+          <div className="flex justify-between my-4 h-32">
             <KeyBoard notes={notes} onPress={() => {}} enabled={false} />
           </div>
           <div className="flex justify-between items-center mt-4 text-sm">
@@ -90,9 +91,9 @@ const VibeShifter = ({ sample, keyboardControlsEnabled, setKeyboardControlsEnabl
   return (
     <PanelGrid>
       <Panel className="basis-1/3" header="WAVEFORM ANALYZER">
-        <div className="bg-[#111] border-2 border-[#333] rounded relative overflow-hidden mb-4 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
+        <div className="flex justify-between my-4 h-32 bg-[#111] border-3 rounded-lg border-[#333] relative overflow-hidden mb-4 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
           <WaveformGrid />
-          {vibeShifterAudio && <WaveformEditor vibeShifterAudio={vibeShifterAudio} />}
+          {vibeShifterAudio && <WaveformEditor vibeShifterAudio={vibeShifterAudio} waveformHeight={waveformHeight} />}
         </div>
         <div className="flex justify-between items-center mt-4 text-sm">
           <StatusIndicator status="ok" label="sample loaded" />
@@ -105,7 +106,7 @@ const VibeShifter = ({ sample, keyboardControlsEnabled, setKeyboardControlsEnabl
         </div>
       </Panel>
       <Panel className="basis-1/3" header="KEYBOARD CONTROLLER">
-        <div className="flex justify-center my-4 h-32">
+        <div className="flex justify-between my-4 h-32">
           {vibeShifterAudio && <KeyBoard notes={notes} onPress={note => vibeShifterAudio.play(note)} enabled={keyboardControlsEnabled} />}
         </div>
         <div className="flex justify-between items-center mt-4 text-sm">
