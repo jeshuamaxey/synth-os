@@ -189,7 +189,9 @@ const VibeShifterTerminal = () => {
       return;
     }
     setSample(sample);
-    setHistory(h => [...h, `Example sample '${sample?.normalized_prompt}' loaded. Keyboard and waveform activated.`]);
+    setHistory(h => [...h, `Example sample '${sample?.normalized_prompt}' loaded.
+Please wait while the synth re-activates.
+If this takes longer than 5secs, click the preview button below.`]);
   }
 
   const handleLoadSample = async (id: string) => {
@@ -209,7 +211,9 @@ const VibeShifterTerminal = () => {
       return;
     }
     setSample(sample);
-    setHistory(h => [...h, `Sample ${sample.id} loaded. Keyboard and waveform activated.`]);
+    setHistory(h => [...h, `Sample ${sample.id.slice(0, 6)}... loaded.
+Please wait while the synth re-activates.
+If this takes longer than 5secs, click the preview button below.`]);
   }
 
   const focusInput = () => {

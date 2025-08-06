@@ -12,7 +12,7 @@ function getBlackKeyOffset(note: string): number {
   return map[note.slice(0, 2)] ?? 0
 }
 
-const Key = ({ note, onPress, isActive, style }: { note: string, onPress: () => void, isActive?: boolean, style?: React.CSSProperties }) => {
+const Key = ({ note, onPress, isActive, style, displayLetter }: { note: string, onPress: () => void, isActive?: boolean, style?: React.CSSProperties, displayLetter?: boolean }) => {
   const blackKey = note.includes('#')
   const keyboardKey = getKeyFromNote(note)
 
@@ -44,7 +44,7 @@ const Key = ({ note, onPress, isActive, style }: { note: string, onPress: () => 
     style={style}
   >
     <div className="flex flex-col h-full items-center justify-end">
-      <span className="text-xs">{keyboardKey}</span>
+      {displayLetter && <span className="text-xs">{keyboardKey}</span>}
     </div>
   </button>
 }
@@ -74,6 +74,7 @@ const KeyBoard = ({ notes, onPress, enabled }: KeyBoardProps) => {
         const isDepressed = depressedNotes.includes(note)
         
         return <Key
+          displayLetter={enabled}
           key={note}
           note={note}
           onPress={() => onPress(note)}
@@ -89,6 +90,7 @@ const KeyBoard = ({ notes, onPress, enabled }: KeyBoardProps) => {
         const isDepressed = depressedNotes.includes(note)
 
         return <Key
+          displayLetter={enabled}
           key={note}
           note={note}
           onPress={() => onPress(note)}
