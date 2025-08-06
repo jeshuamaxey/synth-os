@@ -88,7 +88,7 @@ const VibeShifterTerminal = () => {
     const progressSteps = 20;
     for (let i = 0; i <= progressSteps; i++) {
       setProgress(i / (progressSteps+2));
-      await sleep(80 + Math.random() * 60);
+      await sleep(100 + Math.random() * 300);
     }
     try {
       const response = await fetch("/api/samples/generate", {
