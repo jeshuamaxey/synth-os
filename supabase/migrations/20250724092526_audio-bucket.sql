@@ -28,8 +28,9 @@ create table if not exists public.samples (
   normalized_prompt text not null unique,
   public_url text not null,
   root_midi integer not null default 60,
-  trim_start integer,
-  trim_end integer,
+  trim_start integer,                                   -- in milliseconds
+  trim_end integer,                                     -- in milliseconds
+  duration integer,                                     -- in milliseconds
   is_example boolean not null default false,
   created_at timestamp with time zone default now()
 );

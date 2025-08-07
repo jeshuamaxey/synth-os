@@ -21,6 +21,7 @@ const seedSamples = [
     root_midi: 60,
     trim_start: null,
     trim_end: null,
+    duration: 1567,
     is_example: true
   },
   {
@@ -31,6 +32,7 @@ const seedSamples = [
     root_midi: 60,
     trim_start: null,
     trim_end: null,
+    duration: 1567,
     is_example: true
   }
 ]

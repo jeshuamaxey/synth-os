@@ -3,6 +3,7 @@
 import { createContext, useContext, useRef, useEffect, ReactNode, useState } from 'react'
 import { VibeShifterAudio } from '@/lib/audio/vibe-shifter'
 import { Sample } from '@/types/supabase'
+import { useDebug } from '@/hooks/useDebug'
 
 interface VibeShifterContextType {
   engine: VibeShifterAudio | null
@@ -18,10 +19,11 @@ interface VibeShifterProviderProps {
 export function VibeShifterProvider({ children, sample }: VibeShifterProviderProps) {
   const engineRef = useRef<VibeShifterAudio | null>(null)
   const [engine, setEngine] = useState<VibeShifterAudio | null>(null)
+  const debug = useDebug()
 
   useEffect(() => {
     if (sample) {
-      const newEngine = new VibeShifterAudio(sample, { debug: false })
+      const newEngine = new VibeShifterAudio(sample, { debug })
       engineRef.current = newEngine
       setEngine(newEngine)
       newEngine.loadSample()
@@ -29,7 +31,7 @@ export function VibeShifterProvider({ children, sample }: VibeShifterProviderPro
       engineRef.current = null
       setEngine(null)
     }
-  }, [sample])
+  }, [sample, debug])
 
   return (
     <VibeShifterContext.Provider value={{ engine }}>

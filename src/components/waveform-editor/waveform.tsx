@@ -1,5 +1,6 @@
 'use client'
 
+import { useDuration, useSample, useTrimState } from "@/hooks/useVibeShifterState";
 import { VibeShifterAudio } from "@/lib/audio/vibe-shifter";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -22,14 +23,10 @@ function getWaveformData(buffer: AudioBuffer, samples = 300): number[] {
 const Waveform = ({ vibeShifterAudio, width = 300, height = 80 }: { vibeShifterAudio: VibeShifterAudio, width?: number, height?: number }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const waveformRef = useRef<number[] | null>(null)
-  const [waveformReady, setWaveformReady] = useState(false)
+  const sample = useSample()
+  const duration = useDuration()
+  const [trimState] = useTrimState()
   const [, setStartTime] = useState<number | null>(null)
-
-  useEffect(() => {
-    vibeShifterAudio.loadSample().then(() => {
-      setWaveformReady(true)
-    })
-  }, [vibeShifterAudio])
 
   const drawWaveform = useCallback((playheadPercent: number = 0) => {
     const canvas = canvasRef.current
@@ -46,12 +43,12 @@ const Waveform = ({ vibeShifterAudio, width = 300, height = 80 }: { vibeShifterA
     ctx.clearRect(0, 0, width, height)
 
     // --- Trim maths --------------------------------------------
-    const bufDurS    = vibeShifterAudio.duration
-    const trimStartS = (vibeShifterAudio.trimStartMs ?? 0) / 1000
-    const trimEndS   = (vibeShifterAudio.trimEndMs   ?? bufDurS * 1000) / 1000
+    const durS    = duration / 1000
+    const trimStartS = (trimState?.trimStartMs ?? 0) / 1000
+    const trimEndS   = (trimState?.trimEndMs   ?? durS * 1000) / 1000
 
-    const keepStartRatio = trimStartS / bufDurS                // left offset
-    const keepWidthRatio = (trimEndS - trimStartS) / bufDurS    // width of kept region
+    const keepStartRatio = trimStartS / durS                // left offset
+    const keepWidthRatio = (trimEndS - trimStartS) / durS    // width of kept region
     //-------------------------------------------------------------
 
 
@@ -63,7 +60,7 @@ const Waveform = ({ vibeShifterAudio, width = 300, height = 80 }: { vibeShifterA
       const y = value * height
 
       // Compute time of this bar (0‑1)
-      const barTime = (i / waveform.length) * bufDurS            // seconds of this bar
+      const barTime = (i / waveform.length) * durS            // seconds of this bar
       const inTrimGap = barTime < trimStartS || barTime > trimEndS
 
       if (inTrimGap) {
@@ -87,19 +84,25 @@ const Waveform = ({ vibeShifterAudio, width = 300, height = 80 }: { vibeShifterA
     ctx.moveTo(playheadX, 0)
     ctx.lineTo(playheadX, height)
     ctx.stroke()
-  }, [width, height, vibeShifterAudio.duration, vibeShifterAudio.trimStartMs, vibeShifterAudio.trimEndMs])
+  }, [width, height, duration, trimState])
 
-  // Extract and cache waveform data
   useEffect(() => {
-    if (!vibeShifterAudio.buffer || !waveformReady) {
-      return
-    }
+    if (!sample?.id) return
 
-    const waveform = getWaveformData(vibeShifterAudio.buffer)
+    // Reset state immediately
+    waveformRef.current = null
+    
+    // Load sample and generate waveform in sequence
+    vibeShifterAudio.loadSample().then(() => {
+      if (!vibeShifterAudio.buffer) return
 
-    waveformRef.current = waveform
-    drawWaveform()
-  }, [drawWaveform, vibeShifterAudio.buffer, waveformReady])
+      const waveform = getWaveformData(vibeShifterAudio.buffer)
+      waveformRef.current = waveform
+      drawWaveform()
+    }).catch(error => {
+      console.error('Failed to load sample:', error)
+    })
+  }, [sample?.id, vibeShifterAudio, drawWaveform])
 
   useEffect(() => {
     const handlePlay = ({ startTime }: { startTime: number }) => {
@@ -123,7 +126,7 @@ const Waveform = ({ vibeShifterAudio, width = 300, height = 80 }: { vibeShifterA
     let frameId: number
 
     const draw = () => {
-      if (!vibeShifterAudio.buffer ||  !vibeShifterAudio.ctx || !vibeShifterAudio.startTime || !vibeShifterAudio.duration) return
+      if (!vibeShifterAudio.buffer ||  !vibeShifterAudio.ctx || !vibeShifterAudio.startTime || !duration) return
 
       // const now = vibeShifterAudio.buffer.sampleRate ? vibeShifterAudio.buffer.sampleRate * (performance.now() / 1000) : 0
       const elapsed = (vibeShifterAudio.ctx.currentTime - vibeShifterAudio.startTime) * 1000
@@ -136,7 +139,14 @@ const Waveform = ({ vibeShifterAudio, width = 300, height = 80 }: { vibeShifterA
     draw()
 
     return () => cancelAnimationFrame(frameId)
-  }, [vibeShifterAudio.buffer, vibeShifterAudio.ctx, vibeShifterAudio.duration, vibeShifterAudio.startTime, vibeShifterAudio.trimStartMs, vibeShifterAudio.trimEndMs, drawWaveform, vibeShifterAudio.trimmedDuration])
+  }, [
+    vibeShifterAudio.buffer,
+    vibeShifterAudio.ctx,
+    duration,
+    vibeShifterAudio.startTime,
+    drawWaveform,
+    vibeShifterAudio.trimmedDuration
+  ])
 
   return <canvas ref={canvasRef} width={width} height={height} className="" />
 }

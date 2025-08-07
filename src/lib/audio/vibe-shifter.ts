@@ -25,7 +25,13 @@ function noteNameToMidi(note: string): number {
 
 type VibeShiftEvent = 'play' | 'loaded' | 'notesChanged' | 'trimChanged'
 type VibeShiftPlayListener = (payload: { note: string; startTime: number }) => void
-type VibeShiftLoadedListener = (payload: object) => void
+type VibeShiftLoadedListener = (payload: {
+  sampleId: string;
+  bufferDuration: number;
+  bufferLength: number;
+  sampleRate: number;
+  numberOfChannels: number;
+}) => void
 type VibeShiftNotesChangedListener = (payload: {notes: string[]}) => void
 type VibeShiftTrimChangedListener = (payload: {trimStartMs: number, trimEndMs: number}) => void
 
@@ -52,6 +58,7 @@ export class VibeShifterAudio {
     trimChanged: []
   }
 
+  private _lastLoadedSampleId: string | null = null
   private _trimStartMs: number | null = null
   private _trimEndMs: number | null = null
   public nowPlayingNotes:string[] = []
@@ -61,17 +68,28 @@ export class VibeShifterAudio {
     private options: typeof DEFAULT_OPTIONS = DEFAULT_OPTIONS
   ) {
     if (this.inBrowser) {
+      this.log('constructor() :: initializing')
       this.ctx = new AudioContext()
-
+      
       this.buffer = new AudioBuffer({
         length: 1,
         sampleRate: 44100,
         numberOfChannels: 2
       })
-
+      
+      // Set the sample first if provided
+      if(sample) {
+        this.log('constructor() :: has sample')
+        this.sample = sample
+        this._trimStartMs = sample.trim_start ?? null
+        this._trimEndMs = sample.trim_end ?? null
+        this.log('constructor() :: sample', this.sample)
+      }
+      
+      // Then load the worklet and sample
       this.ensureWorklet().then(() => {
         this.log('worklet ready')
-        this.loadSample()
+        return this.loadSample()
       })
       .then(() => {
         this.log('sample loaded')
@@ -80,19 +98,8 @@ export class VibeShifterAudio {
         console.error('error loading sample', err)
       })
 
-      if(sample) {
-        this.sample = sample
-        this._trimStartMs = sample.trim_start || null
-        this._trimEndMs = sample.trim_end || null
-
-        console.log('sample', this.sample)
-        console.log('trimStartMs', this._trimStartMs)
-        console.log('trimEndMs', this._trimEndMs)
-      }
-
     } else {
       this.log('cannot instantiate outside of browser')
-
       this._trimEndMs = 0
     }
   }
@@ -108,13 +115,14 @@ export class VibeShifterAudio {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private dispatch(event: VibeShiftEvent, payload: any) {
+    this.log(`dispatching ${event} with payload ${JSON.stringify(payload)}`)
     this.listeners[event].forEach(fn => fn(payload))
   }
 
   /** Load the SoundTouch worklet once. Call automatically from play(). */
   private async ensureWorklet(): Promise<void> {
     if (!this.ctx) {
-      console.warn('VibeShifterAudio: cannot load worklet outside of browser'); return
+      console.warn('ensureWorklet() :: cannot load worklet outside of browser'); return
     }
     if (this.workletReady) return
 
@@ -133,12 +141,44 @@ export class VibeShifterAudio {
     if(!this.sample) {
       console.warn('VibeShifterAudio: no sample to load'); return
     }
-    console.log('loading sample', this.sample.public_url)
-    const res = await fetch(this.sample.public_url)
-    const arrBuf = await res.arrayBuffer()
-    this.buffer = await this.ctx.decodeAudioData(arrBuf)
-    this._trimEndMs = this.buffer.duration * 1000
-    this.dispatch('loaded', {})
+    if(this._lastLoadedSampleId === this.sample.id) return
+
+    try {
+      this.log('loadSample() :: loading sample', this.sample.public_url)
+      const res = await fetch(this.sample.public_url)
+      
+      if (!res.ok) {
+        throw new Error(`Failed to fetch sample: ${res.status} ${res.statusText}`)
+      }
+      
+      const arrBuf = await res.arrayBuffer()
+      this.buffer = await this.ctx.decodeAudioData(arrBuf)
+      
+      // Validate that the buffer was created successfully
+      if (!this.buffer || this.buffer.length === 0) {
+        throw new Error('Failed to decode audio data - buffer is empty or null')
+      }
+      
+      this.log(`loadSample() :: Sample loaded successfully. Buffer duration: ${this.buffer.duration}s, length: ${this.buffer.length} samples`)
+
+      this._trimStartMs = this.sample.trim_start ?? 0
+      this._trimEndMs = this.sample.trim_end ?? this.sample.duration ?? null
+
+      this._lastLoadedSampleId = this.sample.id
+
+      this.dispatch('loaded', {
+        sampleId: this.sample.id,
+        bufferDuration: this.buffer.duration,
+        bufferLength: this.buffer.length,
+        sampleRate: this.buffer.sampleRate,
+        numberOfChannels: this.buffer.numberOfChannels
+      })
+    } catch (error) {
+      console.error('Error loading sample:', error)
+      this.buffer = null
+      this._lastLoadedSampleId = null
+      throw error
+    }
   }
 
   /** Play a MIDI note (60 = C4). */
@@ -242,7 +282,7 @@ export class VibeShifterAudio {
   }
 
   get trimEndMs(): number {
-    return this._trimEndMs ?? (this.buffer?.duration ?? 0) * 1000
+    return this._trimEndMs ?? this.sample?.duration ?? 0
   }
 
   set trimStartMs(value: number) {
@@ -259,9 +299,20 @@ export class VibeShifterAudio {
     return this.nowPlayingNotes.length > 0
   }
 
-  log(message: string) {
+  get bufferInfo(): { duration: number; length: number; sampleRate: number; numberOfChannels: number } | null {
+    if (!this.buffer) return null
+    
+    return {
+      duration: this.buffer.duration,
+      length: this.buffer.length,
+      sampleRate: this.buffer.sampleRate,
+      numberOfChannels: this.buffer.numberOfChannels
+    }
+  }
+
+  log(...args: unknown[]) {
     if(this.options.debug) {
-      console.log(`VibeShifterAudio: ${message}`)
+      console.log(`VibeShifterAudio :: `, ...args)
     }
   }
 }

@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "postinstall": "tsx scripts/copy-soundtouch.ts",
-    "db-reset": "supabase db reset && ts-node scripts/seed-samples.ts && npm run gen:types",
+    "db-reset": "supabase db reset && tsx scripts/seed-samples.ts && npm run gen:types",
     "gen:types": "supabase gen types typescript --local > src/types/supabase.autogen.ts"
   },
   "dependencies": {

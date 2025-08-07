@@ -17,9 +17,9 @@ export type Database = {
     Functions: {
       graphql: {
         Args: {
+          extensions?: Json
           operationName?: string
           query?: string
-          extensions?: Json
           variables?: Json
         }
         Returns: Json
@@ -37,6 +37,7 @@ export type Database = {
       samples: {
         Row: {
           created_at: string | null
+          duration: number | null
           id: string
           is_example: boolean
           normalized_prompt: string
@@ -47,6 +48,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          duration?: number | null
           id?: string
           is_example?: boolean
           normalized_prompt: string
@@ -57,6 +59,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          duration?: number | null
           id?: string
           is_example?: boolean
           normalized_prompt?: string

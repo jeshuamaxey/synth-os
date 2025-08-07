@@ -106,7 +106,8 @@ const VibeShifterTerminal = () => {
         trim_end: data.trim_end,
         normalized_prompt: description,
         is_example: false,
-        created_at: null
+        created_at: null,
+        duration: data.duration
       });
       setHistory(h => [...h, "Sample ready. Keyboard and waveform activated."]);
     } catch {
@@ -178,7 +179,6 @@ const VibeShifterTerminal = () => {
 
   const handleLoadExample = async () => {
     const { data: samples } = await refetchSamples();
-    console.log('samples', samples);
     if (!samples || samples.length === 0) {
       setHistory(h => [...h, "Sample not found."]);
       return;
@@ -219,7 +219,6 @@ If this takes longer than 5secs, click the preview button below.`]);
   const focusInput = () => {
     if (inputRef.current) inputRef.current.focus();
 
-    console.log('focusInput');
     setKeyboardControlsEnabled(false);
   }
 
