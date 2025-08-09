@@ -1,25 +1,37 @@
 "use client"
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import VibeShifter from ".";
 import { Sample } from "@/types/supabase";
 import { useSamples } from '@/hooks/useSamples';
 import { Panel } from "../panel";
 import TerminalScreen from "./terminal-screen";
 import { sleep } from "@/lib/utils";
+// import { CLIProgressLoader } from "@/lib/CLIProgressLoader";
+import { useSampleLoadingProgress } from "@/hooks/useVibeShifterState";
+import { useVibeShifterEvent } from "@/hooks/useVibeShifterEvent";
+import { useVibeShifter } from "@/providers/vibe-shifter-provider";
 
+// Persist boot state across remounts within the same session
+let TERMINAL_BOOTED = false;
+let TERMINAL_BOOT_LINES: string[] = [];
 
 const VibeShifterTerminal = () => {
+  const { engine, setSample } = useVibeShifter();
+  const engineProgress = useSampleLoadingProgress();
+  const loadedSampleId = useVibeShifterEvent<string>(engine, 'loaded', (p: unknown) => (p as { sampleId: string }).sampleId);
   // bootStage, typedLines, currentLine are no longer needed
-  const [booting, setBooting] = useState(true);
+  const [booting, setBooting] = useState<boolean>(() => !TERMINAL_BOOTED);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const setHistoryIndex = useState<number | null>(null)[1];
-  const [sample, setSample] = useState<Sample | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [bootLines, setBootLines] = useState<string[]>([]); // Store boot text lines
-  const [progress, setProgress] = useState(0);
+  const [bootLines, setBootLines] = useState<string[]>(() => TERMINAL_BOOT_LINES); // Store boot text lines
+  
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingIndeterminate, setLoadingIndeterminate] = useState(false);
+  const [awaitingSampleId, setAwaitingSampleId] = useState<string | null>(null);
   
   const inputRef = useRef<HTMLInputElement>(null);
   const terminalScreenRef = useRef<HTMLDivElement>(null);
@@ -27,6 +39,45 @@ const VibeShifterTerminal = () => {
   const { refetch: refetchSamples } = useSamples();
 
   const [keyboardControlsEnabled, setKeyboardControlsEnabled] = useState(false);
+
+  // Generic wrapper to run a command with loading UI
+  const withLoading = useCallback(async <T,>(fn: () => Promise<T>, options?: { indeterminate?: boolean }): Promise<T> => {
+    setIsLoading(true);
+    setLoadingProgress(0);
+    setLoadingIndeterminate(options?.indeterminate ?? true);
+    try {
+      const result = await fn();
+      return result;
+    } finally {
+      // Do not reset here if caller wants to keep loading until an external event resolves.
+    }
+  }, []);
+
+  // Core routine to start loading a selected sample and switch to determinate progress
+  const beginEngineLoadForSample = useCallback((sample: Sample) => {
+    setLoadingIndeterminate(false);
+    setLoadingProgress(0);
+    setAwaitingSampleId(sample.id);
+    setSample(sample);
+  }, [setSample]);
+
+  // When engine emits progress, reflect it during determinate phase
+  useEffect(() => {
+    if (isLoading && !loadingIndeterminate) {
+      setLoadingProgress(engineProgress ?? 0);
+    }
+  }, [engineProgress, isLoading, loadingIndeterminate]);
+
+  // When engine reports loaded for the sample we're waiting on, finalize
+  useEffect(() => {
+    if (isLoading && !loadingIndeterminate && loadedSampleId && awaitingSampleId && loadedSampleId === awaitingSampleId) {
+      setIsLoading(false);
+      setLoadingProgress(0);
+      setLoadingIndeterminate(false);
+      setAwaitingSampleId(null);
+      setHistory(h => [...h, "Sample ready. Keyboard and waveform activated."]);
+    }
+  }, [loadedSampleId, awaitingSampleId, isLoading, loadingIndeterminate]);
 
   // Command handlers
   const handleLs = async () => {
@@ -76,45 +127,46 @@ const VibeShifterTerminal = () => {
       setHistory(h => [...h, "Usage: generate <description> <duration>"]);
       return;
     }
+
     const description = args.slice(1, -1).join(" ");
     const duration = parseInt(args[args.length - 1], 10);
     if (isNaN(duration) || duration < 1 || duration > 10) {
       setHistory(h => [...h, "Duration must be 1-10 seconds."]);
       return;
     }
-    setIsGenerating(true);
-    setSample(null);
-    setHistory(h => [...h, `Generating sample: '${description}' (${duration}s)...`]);
-    const progressSteps = 20;
-    for (let i = 0; i <= progressSteps; i++) {
-      setProgress(i / (progressSteps+2));
-      await sleep(100 + Math.random() * 300);
-    }
-    try {
-      const response = await fetch("/api/samples/generate", {
-        method: "POST",
-        body: JSON.stringify({ prompt: description, duration })
-      });
-      setProgress(1);
-      await sleep(500);
-      const data = await response.json();
-      setSample({
-        id: data.id,
-        public_url: data.public_url,
-        root_midi: data.root_midi,
-        trim_start: data.trim_start,
-        trim_end: data.trim_end,
-        normalized_prompt: description,
-        is_example: false,
-        created_at: null,
-        duration: data.duration
-      });
-      setHistory(h => [...h, "Sample ready. Keyboard and waveform activated."]);
-    } catch {
-      setHistory(h => [...h, "Error generating sample."]);
-    }
-    setIsGenerating(false);
-    setProgress(0);
+
+    setHistory(h => [...h, `Generating sample: '${description}' (${duration}s)...`] );
+
+    // Phase 1: Indeterminate while the API generates audio and we await response
+    await withLoading(async () => {
+      try {
+        const response = await fetch("/api/samples/generate", {
+          method: "POST",
+          body: JSON.stringify({ prompt: description, duration }),
+        });
+
+        await sleep(200); // tiny UX pause
+        const data = await response.json();
+
+        // Phase 2: Switch to engine-bound progress once we have a sample to load
+        setLoadingIndeterminate(false);
+        setLoadingProgress(0);
+
+        // Install sample; hook effects will watch progress and completion
+        setAwaitingSampleId(data.id);
+        setSample({
+          ...data,
+          is_example: false,
+          created_at: null,
+        });
+      } catch {
+        setHistory(h => [...h, "Error generating sample."]);
+        setIsLoading(false);
+        setLoadingProgress(0);
+        setLoadingIndeterminate(false);
+        setAwaitingSampleId(null);
+      }
+    }, { indeterminate: true });
   };
 
   const handleCommand = async (cmd: string) => {
@@ -149,6 +201,7 @@ const VibeShifterTerminal = () => {
   };
 
   const handleInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (isLoading) return; // lock input while loading
     if (e.key === "Enter") {
       const cmd = input;
       setInput("");
@@ -178,20 +231,29 @@ const VibeShifterTerminal = () => {
   };
 
   const handleLoadExample = async () => {
-    const { data: samples } = await refetchSamples();
-    if (!samples || samples.length === 0) {
-      setHistory(h => [...h, "Sample not found."]);
-      return;
-    }
-    const sample = samples.find(s => s.is_example);
-    if (!sample) {
-      setHistory(h => [...h, "Sample not found."]);
-      return;
-    }
-    setSample(sample);
-    setHistory(h => [...h, `Example sample '${sample?.normalized_prompt}' loaded.
-Please wait while the synth re-activates.
-If this takes longer than 5secs, click the preview button below.`]);
+    setHistory(h => [...h, "Loading example sample..."]);
+    await withLoading(async () => {
+      const { data: samples } = await refetchSamples();
+      if (!samples || samples.length === 0) {
+        setHistory(h => [...h, "Sample not found."]);
+        setIsLoading(false);
+        setLoadingProgress(0);
+        setLoadingIndeterminate(false);
+        setAwaitingSampleId(null);
+        return;
+      }
+      const sample = (samples as Sample[]).find(s => s.is_example);
+      if (!sample) {
+        setHistory(h => [...h, "Sample not found."]);
+        setIsLoading(false);
+        setLoadingProgress(0);
+        setLoadingIndeterminate(false);
+        setAwaitingSampleId(null);
+        return;
+      }
+
+      beginEngineLoadForSample(sample);
+    }, { indeterminate: true });
   }
 
   const handleLoadSample = async (id: string) => {
@@ -200,20 +262,29 @@ If this takes longer than 5secs, click the preview button below.`]);
       return;
     }
 
-    const { data: samples } = await refetchSamples();
-    if (!samples || samples.length === 0) {
-      setHistory(h => [...h, "Sample not found."]);
-      return;
-    }
-    const sample = samples.find(s => s.id.startsWith(id));
-    if (!sample) {
-      setHistory(h => [...h, "Sample not found."]);
-      return;
-    }
-    setSample(sample);
-    setHistory(h => [...h, `Sample ${sample.id.slice(0, 6)}... loaded.
-Please wait while the synth re-activates.
-If this takes longer than 5secs, click the preview button below.`]);
+    setHistory(h => [...h, `Loading sample '${id}'...`]);
+    await withLoading(async () => {
+      const { data: samples } = await refetchSamples();
+      if (!samples || samples.length === 0) {
+        setHistory(h => [...h, "Sample not found."]);
+        setIsLoading(false);
+        setLoadingProgress(0);
+        setLoadingIndeterminate(false);
+        setAwaitingSampleId(null);
+        return;
+      }
+      const sample = (samples as Sample[]).find(s => s.id.startsWith(id));
+      if (!sample) {
+        setHistory(h => [...h, "Sample not found."]);
+        setIsLoading(false);
+        setLoadingProgress(0);
+        setLoadingIndeterminate(false);
+        setAwaitingSampleId(null);
+        return;
+      }
+
+      beginEngineLoadForSample(sample);
+    }, { indeterminate: true });
   }
 
   const focusInput = () => {
@@ -221,6 +292,13 @@ If this takes longer than 5secs, click the preview button below.`]);
 
     setKeyboardControlsEnabled(false);
   }
+
+  const handleBootComplete = useCallback((lines: string[]) => {
+    TERMINAL_BOOTED = true;
+    TERMINAL_BOOT_LINES = lines;
+    setBooting(false);
+    setBootLines(lines);
+  }, [])
 
   return (
     <div className="h-screen flex flex-col bg-[#1a1a1a] text-terminal-pixel">
@@ -241,13 +319,11 @@ If this takes longer than 5secs, click the preview button below.`]);
             }}
             booting={booting}
             history={history}
-            onBootComplete={useCallback((lines: string[]) => {
-              setBooting(false);
-              setBootLines(lines);
-            }, [])}
+            onBootComplete={handleBootComplete}
             bootLines={bootLines}
-            isGenerating={isGenerating}
-            generatingProgress={progress}
+            isLoading={isLoading}
+            loadingProgress={loadingProgress}
+            loadingIndeterminate={loadingIndeterminate}
           />
         </Panel>
       </div>
@@ -255,7 +331,7 @@ If this takes longer than 5secs, click the preview button below.`]);
         className="flex-1 basis-1/2 min-h-0 max-h-1/2 overflow-y-auto flex flex-col items-center mt-8"
         style={booting ? { opacity: 0.5, pointerEvents: 'none', userSelect: 'none' } : {}}
       >
-        <VibeShifter sample={sample} keyboardControlsEnabled={keyboardControlsEnabled} setKeyboardControlsEnabled={setKeyboardControlsEnabled} />
+        <VibeShifter keyboardControlsEnabled={keyboardControlsEnabled} setKeyboardControlsEnabled={setKeyboardControlsEnabled} />
       </div>
     </div>
   );

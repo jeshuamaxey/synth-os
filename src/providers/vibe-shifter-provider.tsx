@@ -1,40 +1,42 @@
 'use client'
 
-import { createContext, useContext, useRef, useEffect, ReactNode, useState } from 'react'
+import { createContext, useContext, useRef, ReactNode, useState } from 'react'
 import { VibeShifterAudio } from '@/lib/audio/vibe-shifter'
 import { Sample } from '@/types/supabase'
 import { useDebug } from '@/hooks/useDebug'
 
 interface VibeShifterContextType {
   engine: VibeShifterAudio | null
+  setSample: (sample: Sample | null) => VibeShifterAudio
 }
 
 const VibeShifterContext = createContext<VibeShifterContextType | null>(null)
 
 interface VibeShifterProviderProps {
   children: ReactNode
-  sample: Sample | null
 }
 
-export function VibeShifterProvider({ children, sample }: VibeShifterProviderProps) {
+export function VibeShifterProvider({ children }: VibeShifterProviderProps) {
   const engineRef = useRef<VibeShifterAudio | null>(null)
+  const [, _setSample] = useState<Sample | null>(null)
   const [engine, setEngine] = useState<VibeShifterAudio | null>(null)
   const debug = useDebug()
 
-  useEffect(() => {
-    if (sample) {
-      const newEngine = new VibeShifterAudio(sample, { debug })
-      engineRef.current = newEngine
-      setEngine(newEngine)
-      newEngine.loadSample()
-    } else {
-      engineRef.current = null
-      setEngine(null)
-    }
-  }, [sample, debug])
+  const setSample = (sample: Sample | null): VibeShifterAudio => {
+    _setSample(sample)
+
+    const newEngine = new VibeShifterAudio(sample, { debug })
+
+    engineRef.current = newEngine
+    setEngine(newEngine)
+
+    if(sample) newEngine.loadSample()
+
+    return newEngine
+  }
 
   return (
-    <VibeShifterContext.Provider value={{ engine }}>
+    <VibeShifterContext.Provider value={{ engine, setSample }}>
       {children}
     </VibeShifterContext.Provider>
   )

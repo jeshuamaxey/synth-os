@@ -28,8 +28,8 @@ export function useTrimState(): [TrimState | undefined, (trimState: TrimState) =
   }), [])
 
   const setValue = useCallback((engine: VibeShifterAudio, value: TrimState) => {
-    engine.trimStartMs = value.trimStartMs
-    engine.trimEndMs = value.trimEndMs
+    // Set both values atomically to avoid intermediate events that can revert UI
+    engine.setTrimMs(value.trimStartMs, value.trimEndMs)
   }, [])
 
   const [trimState, setTrimState] = useVibeShifterBinding(
@@ -40,11 +40,6 @@ export function useTrimState(): [TrimState | undefined, (trimState: TrimState) =
   )
 
   return [trimState, setTrimState]
-}
-
-export function useSample() {
-  const { engine } = useVibeShifter()
-  return engine?.sample
 }
 
 export function useIsLoaded() {
@@ -64,6 +59,8 @@ export function useDuration() {
   const isLoaded = useIsLoaded()
   
   if (!engine || !isLoaded) return 0
+  // Prefer actual decoded buffer duration (ms); fall back to sample.duration if available
+  if (engine.buffer) return Math.round(engine.buffer.duration * 1000)
   return engine.sample?.duration ?? 0
 }
 
@@ -73,4 +70,13 @@ export function useTrimmedDuration() {
   
   if (!engine || !isLoaded) return 0
   return engine.trimmedDuration
-} 
+}
+
+export function useSampleLoadingProgress() {
+  const { engine } = useVibeShifter()
+  const transform = useCallback((payload: unknown) => {
+    const typedPayload = payload as {progress: number}
+    return typedPayload.progress
+  }, [])
+  return useVibeShifterEvent(engine, 'sampleLoadingProgress', transform) ?? 0
+}

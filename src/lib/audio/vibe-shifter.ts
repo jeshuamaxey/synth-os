@@ -23,7 +23,7 @@ function noteNameToMidi(note: string): number {
   return 12 * (octave + 1) + semitone
 }
 
-type VibeShiftEvent = 'play' | 'loaded' | 'notesChanged' | 'trimChanged'
+export type VibeShiftEvent = 'play' | 'loaded' | 'notesChanged' | 'trimChanged' | 'sampleLoadingProgress'
 type VibeShiftPlayListener = (payload: { note: string; startTime: number }) => void
 type VibeShiftLoadedListener = (payload: {
   sampleId: string;
@@ -34,8 +34,9 @@ type VibeShiftLoadedListener = (payload: {
 }) => void
 type VibeShiftNotesChangedListener = (payload: {notes: string[]}) => void
 type VibeShiftTrimChangedListener = (payload: {trimStartMs: number, trimEndMs: number}) => void
+type VibeShiftSampleLoadingProgressListener = (payload: {progress: number}) => void
 
-type VibeShiftListener = VibeShiftPlayListener | VibeShiftLoadedListener | VibeShiftNotesChangedListener | VibeShiftTrimChangedListener
+type VibeShiftListener = VibeShiftPlayListener | VibeShiftLoadedListener | VibeShiftNotesChangedListener | VibeShiftTrimChangedListener | VibeShiftSampleLoadingProgressListener
 
 const DEFAULT_OPTIONS = {
   debug: false
@@ -55,10 +56,11 @@ export class VibeShifterAudio {
     play: [],
     loaded: [],
     notesChanged: [],
-    trimChanged: []
+    trimChanged: [],
+    sampleLoadingProgress: []
   }
 
-  private _lastLoadedSampleId: string | null = null
+  private _currentlyLoadingSampleId: string | null = null
   private _trimStartMs: number | null = null
   private _trimEndMs: number | null = null
   public nowPlayingNotes:string[] = []
@@ -141,18 +143,38 @@ export class VibeShifterAudio {
     if(!this.sample) {
       console.warn('VibeShifterAudio: no sample to load'); return
     }
-    if(this._lastLoadedSampleId === this.sample.id) return
+    if(this._currentlyLoadingSampleId === this.sample.id) return
+
+    this._currentlyLoadingSampleId = this.sample.id
 
     try {
       this.log('loadSample() :: loading sample', this.sample.public_url)
+
+      this.dispatch('sampleLoadingProgress', {progress: 0})
+
       const res = await fetch(this.sample.public_url)
+      // get byte length from res headers
+      const byteLength = parseInt(res.headers.get('content-length') ?? '0', 10)
+      const arrBuf = new Uint8Array(byteLength)
+      const reader = res.body?.getReader();
+      let offset = 0
+
+      while (true) {
+        const {value, done} = await reader?.read() ?? {value: null, done: false};
+        if(value) {
+          arrBuf.set(value, offset)
+          offset += value.length
+          this.dispatch('sampleLoadingProgress', {progress: offset / byteLength})
+        }
+
+        if (done) break;
+      }
       
       if (!res.ok) {
         throw new Error(`Failed to fetch sample: ${res.status} ${res.statusText}`)
       }
       
-      const arrBuf = await res.arrayBuffer()
-      this.buffer = await this.ctx.decodeAudioData(arrBuf)
+      this.buffer = await this.ctx.decodeAudioData(arrBuf.buffer)
       
       // Validate that the buffer was created successfully
       if (!this.buffer || this.buffer.length === 0) {
@@ -161,10 +183,21 @@ export class VibeShifterAudio {
       
       this.log(`loadSample() :: Sample loaded successfully. Buffer duration: ${this.buffer.duration}s, length: ${this.buffer.length} samples`)
 
-      this._trimStartMs = this.sample.trim_start ?? 0
-      this._trimEndMs = this.sample.trim_end ?? this.sample.duration ?? null
+      // Ensure trim bounds and duration are initialized even if server did not provide duration
+      const fallbackDurationMs = Math.round(this.buffer.duration * 1000)
+      const startMs = this.sample.trim_start ?? 0
+      const endMs = this.sample.trim_end ?? (this.sample.duration ?? fallbackDurationMs)
 
-      this._lastLoadedSampleId = this.sample.id
+      this._trimStartMs = startMs
+      this._trimEndMs = endMs
+
+      // Update in-memory sample duration for downstream consumers
+      this.sample = { ...this.sample, duration: (this.sample.duration ?? fallbackDurationMs) } as Sample
+
+      this._currentlyLoadingSampleId = null
+
+      // Notify trim listeners with initialized values so UI reflects correct region
+      this.dispatch('trimChanged', { trimStartMs: this.trimStartMs, trimEndMs: this.trimEndMs })
 
       this.dispatch('loaded', {
         sampleId: this.sample.id,
@@ -176,7 +209,7 @@ export class VibeShifterAudio {
     } catch (error) {
       console.error('Error loading sample:', error)
       this.buffer = null
-      this._lastLoadedSampleId = null
+      this._currentlyLoadingSampleId = null
       throw error
     }
   }
@@ -292,6 +325,13 @@ export class VibeShifterAudio {
 
   set trimEndMs(value: number) {
     this._trimEndMs = value
+    this.dispatch('trimChanged', { trimStartMs: this.trimStartMs, trimEndMs: this.trimEndMs })
+  }
+
+  /** Atomically set both trim start and end (ms) and dispatch a single event. */
+  setTrimMs(startMs: number, endMs: number) {
+    this._trimStartMs = startMs
+    this._trimEndMs = endMs
     this.dispatch('trimChanged', { trimStartMs: this.trimStartMs, trimEndMs: this.trimEndMs })
   }
 

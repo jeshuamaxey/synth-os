@@ -2,20 +2,18 @@
 
 import KeyBoard from "@/components/keyboard";
 import WaveformEditor from "../waveform-editor";
-import { Sample } from "@/types/supabase";
 import { useSampleMutation } from "@/hooks/useSamples";
 import { Panel, PanelGrid } from "@/components/panel";
 import WaveformGrid from "../waveform-editor/waveform-grid";
 import StatusIndicator from "../status-indicator";
 import ControlButton from "../control-button";
 import EllipsisSpinner from "../ellipsis-spinner";
-import { VibeShifterProvider, useVibeShifter } from "@/providers/vibe-shifter-provider";
+import { useVibeShifter } from "@/providers/vibe-shifter-provider";
 import { useIsPlaying } from "@/hooks/useVibeShifterState";
 
 const notes = ['C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4', 'C5']
 
 type VibeShifterProps = {
-  sample: Sample | null
   keyboardControlsEnabled: boolean
   setKeyboardControlsEnabled: (enabled: boolean) => void
 }
@@ -93,14 +91,12 @@ const VibeShifterContent = ({ keyboardControlsEnabled, setKeyboardControlsEnable
   )
 }
 
-const VibeShifter = ({ sample, keyboardControlsEnabled, setKeyboardControlsEnabled }: VibeShifterProps) => {
+const VibeShifter = ({ keyboardControlsEnabled, setKeyboardControlsEnabled }: VibeShifterProps) => {
   return (
-    <VibeShifterProvider sample={sample}>
-      <VibeShifterContent 
-        keyboardControlsEnabled={keyboardControlsEnabled} 
-        setKeyboardControlsEnabled={setKeyboardControlsEnabled} 
-      />
-    </VibeShifterProvider>
+    <VibeShifterContent 
+      keyboardControlsEnabled={keyboardControlsEnabled} 
+      setKeyboardControlsEnabled={setKeyboardControlsEnabled} 
+    />
   );
 };
 

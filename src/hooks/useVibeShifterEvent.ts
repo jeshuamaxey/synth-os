@@ -1,7 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { VibeShifterAudio } from '@/lib/audio/vibe-shifter'
-
-type VibeShiftEvent = 'play' | 'loaded' | 'notesChanged' | 'trimChanged'
+import { VibeShifterAudio, VibeShiftEvent } from '@/lib/audio/vibe-shifter'
 
 export function useVibeShifterEvent<T>(
   engine: VibeShifterAudio | null,

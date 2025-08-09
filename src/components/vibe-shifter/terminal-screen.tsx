@@ -2,6 +2,7 @@
 
 import { sleep } from "@/lib/utils";
 import { forwardRef, useEffect, useState } from "react";
+import EllipsisSpinner from "../ellipsis-spinner";
 
 interface TerminalScreenProps {
   booting: boolean;
@@ -11,8 +12,10 @@ interface TerminalScreenProps {
   history: string[];
   inputRef: React.RefObject<HTMLInputElement | null>;
   bootLines: string[];
-  isGenerating: boolean;
-  generatingProgress: number;
+  isLoading: boolean;
+  loadingProgress: number;
+  // NEW: whether the loading is indeterminate (spinner) vs determinate (progress bar)
+  loadingIndeterminate: boolean;
   input: string;
   setInput: (input: string) => void;
   onBootComplete: (lines: string[]) => void;
@@ -34,7 +37,7 @@ const BOOT_TEXT = [
   "Type 'help' for available commands",
 ];
 
-const TerminalScreen = forwardRef<HTMLDivElement, TerminalScreenProps>(({
+const TerminalScreen = forwardRef<HTMLDivElement, TerminalScreenProps>(({ 
     onChange,
     onKeyDown,
     booting,
@@ -42,8 +45,9 @@ const TerminalScreen = forwardRef<HTMLDivElement, TerminalScreenProps>(({
     inputRef,
     focusInput,
     bootLines,
-    isGenerating,
-    generatingProgress,
+    isLoading,
+    loadingProgress: generatingProgress,
+    loadingIndeterminate,
     input,
     onBootComplete
   }, ref) => {
@@ -72,6 +76,7 @@ const TerminalScreen = forwardRef<HTMLDivElement, TerminalScreenProps>(({
 
   // Boot sequence
   useEffect(() => {
+    if (!booting) return; // prevent reboot animation if already booted
     (async () => {
       await sleep(1200);
       // Type out boot text
@@ -83,12 +88,14 @@ const TerminalScreen = forwardRef<HTMLDivElement, TerminalScreenProps>(({
           typed += line[j];
           setBootTypingLines([...lines]);
           setBootTypingCurrentLine(typed);
+          // wait til next character
           await sleep(18 + Math.random() * 30);
         }
         lines.push(line);
         setBootTypingLines([...lines]);
         setBootTypingCurrentLine("");
-        await sleep(120 + Math.random() * 100);
+        // wait til next line
+        await sleep(60 + Math.random() * 60);
       }
 
       setBootTypingLines([]);
@@ -96,7 +103,12 @@ const TerminalScreen = forwardRef<HTMLDivElement, TerminalScreenProps>(({
       onBootComplete([...lines])
       setActive(true);
     })();
-  }, [onBootComplete]);
+  }, [onBootComplete, booting]);
+
+  // Ensure input becomes active if booting is false without running animation (e.g., after hydration)
+  useEffect(() => {
+    if (!booting) setActive(true);
+  }, [booting]);
 
   // Scroll terminal to bottom when output changes
   useEffect(() => {
@@ -120,16 +132,23 @@ const TerminalScreen = forwardRef<HTMLDivElement, TerminalScreenProps>(({
         : bootLines.map((line, i) => <div key={i}>{line}</div>)}
       {/* Command history and output below boot text */}
       {history.map((line, i) => <div key={i}><pre className={terminalText}>{line}</pre></div>)}
-      {isGenerating && (
-        <div className="text-ibm-green">
-          [
-          {Array.from({ length: 20 }, (_, i) => (
-            <span key={i} style={{ color: i < Math.round(generatingProgress * 20) ? '#00FF41' : '#003800' }}>█</span>
-          ))}
-          ] {Math.round(generatingProgress * 100)}%
-        </div>
+      {isLoading && (
+        loadingIndeterminate ? (
+          <div className="text-ibm-green flex items-center gap-2">
+            <span>Working</span>
+            <EllipsisSpinner />
+          </div>
+        ) : (
+          <div className="text-ibm-green">
+            [
+            {Array.from({ length: 20 }, (_, i) => (
+              <span key={i} style={{ color: i < Math.round(generatingProgress * 20) ? '#00FF41' : '#003800' }}>█</span>
+            ))}
+            ] {Math.round(generatingProgress * 100)}%
+          </div>
+        )
       )}
-      {active && !isGenerating && (
+      {active && !isLoading && (
         <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
           <span style={{ textShadow: '0 0 2px #00FF41, 0 0 6px #00FF41, 0 0 12px #00FF41', color: '#00FF41', fontFamily: 'Courier New, Courier, monospace', fontSize: '14px' }}>C:\SYNTH&gt; </span>
           <span style={{ display: 'inline-block', width: '0.5em' }} />

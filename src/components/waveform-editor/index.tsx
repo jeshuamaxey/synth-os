@@ -9,8 +9,6 @@ import { useTrimState } from '@/hooks/useVibeShifterState'
 const WaveformEditor = ({ vibeShifterAudio, waveformHeight = 100 }: { vibeShifterAudio: VibeShifterAudio, waveformHeight?: number }) => {
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // const [startMs, setStartMs] = useState(vibeShifterAudio.trimStartMs)
-  // const [endMs, setEndMs] = useState(vibeShifterAudio.trimEndMs)
   const [trimState, setTrimState] = useTrimState()
   const [duration, setDuration] = useState(0)
   const [trimmedDuration, setTrimmedDuration] = useState(0)
@@ -20,19 +18,8 @@ const WaveformEditor = ({ vibeShifterAudio, waveformHeight = 100 }: { vibeShifte
     setWidth(containerRef.current?.clientWidth ?? 300)
   }, [])
 
-  // Sync local state to the vibe instance
-  // useEffect(() => {
-  //   vibeShifterAudio.trimStartMs = startMs
-  // }, [startMs, vibeShifterAudio])
-
-  // useEffect(() => {
-  //   vibeShifterAudio.trimEndMs = endMs
-  // }, [endMs, vibeShifterAudio])
-
   useEffect(() => {
     vibeShifterAudio.addEventListener('loaded', () => {
-      // setStartMs(vibeShifterAudio.trimStartMs)
-      // setEndMs(vibeShifterAudio.trimEndMs)
       setDuration(vibeShifterAudio.duration ?? 0)
     })
   }, [vibeShifterAudio])
@@ -41,6 +28,9 @@ const WaveformEditor = ({ vibeShifterAudio, waveformHeight = 100 }: { vibeShifte
     setTrimmedDuration(vibeShifterAudio.trimmedDuration)
   }, [vibeShifterAudio.trimmedDuration])
 
+  const effectiveStartMs = trimState?.trimStartMs ?? 0
+  const effectiveEndMs = trimState?.trimEndMs ?? (Math.round((vibeShifterAudio.duration ?? 0) * 1000))
+
   return <div>
     <div className="px-2" ref={containerRef}>
       <div className="relative">
@@ -48,14 +38,14 @@ const WaveformEditor = ({ vibeShifterAudio, waveformHeight = 100 }: { vibeShifte
         <div className="flex flex-col items-end absolute top-0 left-0 w-full p-1">
           {trimmedDuration !== 0 && <div className="text-xs text-slate-500">Trimmed Duration: {trimmedDuration.toFixed(2)}s</div>}
           {duration !== 0 && <div className="text-xs text-slate-500">Duration: {duration.toFixed(2)}s</div>}
-          {trimmedDuration !== 0 && <div className="text-xs text-slate-500">Trimmed Duration: {((trimmedDuration / duration) * 100).toFixed(2)}%</div>}
+          {trimmedDuration !== 0 && duration !== 0 && <div className="text-xs text-slate-500">Trimmed Duration: {((trimmedDuration / duration) * 100).toFixed(2)}%</div>}
         </div>
       </div>
     </div>
     <TrimControls
       duration={duration}
-      startMs={trimState?.trimStartMs ?? 0}
-      endMs={trimState?.trimEndMs ?? 0}
+      startMs={effectiveStartMs}
+      endMs={effectiveEndMs}
       setTrim={trimState => setTrimState(trimState)}
       width={width}
       />

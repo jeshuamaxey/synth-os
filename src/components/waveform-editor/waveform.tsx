@@ -1,7 +1,8 @@
 'use client'
 
-import { useDuration, useSample, useTrimState } from "@/hooks/useVibeShifterState";
+import { useDuration, useTrimState } from "@/hooks/useVibeShifterState";
 import { VibeShifterAudio } from "@/lib/audio/vibe-shifter";
+import { useVibeShifter } from "@/providers/vibe-shifter-provider";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 function getWaveformData(buffer: AudioBuffer, samples = 300): number[] {
@@ -23,7 +24,7 @@ function getWaveformData(buffer: AudioBuffer, samples = 300): number[] {
 const Waveform = ({ vibeShifterAudio, width = 300, height = 80 }: { vibeShifterAudio: VibeShifterAudio, width?: number, height?: number }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const waveformRef = useRef<number[] | null>(null)
-  const sample = useSample()
+  const { engine } = useVibeShifter()
   const duration = useDuration()
   const [trimState] = useTrimState()
   const [, setStartTime] = useState<number | null>(null)
@@ -87,22 +88,26 @@ const Waveform = ({ vibeShifterAudio, width = 300, height = 80 }: { vibeShifterA
   }, [width, height, duration, trimState])
 
   useEffect(() => {
-    if (!sample?.id) return
+    if (!engine?.sample?.id) return
 
     // Reset state immediately
     waveformRef.current = null
-    
-    // Load sample and generate waveform in sequence
-    vibeShifterAudio.loadSample().then(() => {
-      if (!vibeShifterAudio.buffer) return
 
+    // Only load if buffer not present
+    const ensure = async () => {
+      if (!vibeShifterAudio.buffer) {
+        await vibeShifterAudio.loadSample()
+      }
+      if (!vibeShifterAudio.buffer) return
       const waveform = getWaveformData(vibeShifterAudio.buffer)
       waveformRef.current = waveform
       drawWaveform()
-    }).catch(error => {
+    }
+
+    ensure().catch(error => {
       console.error('Failed to load sample:', error)
     })
-  }, [sample?.id, vibeShifterAudio, drawWaveform])
+  }, [engine?.sample?.id, vibeShifterAudio, drawWaveform])
 
   useEffect(() => {
     const handlePlay = ({ startTime }: { startTime: number }) => {
