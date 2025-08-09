@@ -17,10 +17,10 @@ export type Database = {
     Functions: {
       graphql: {
         Args: {
-          extensions?: Json
+          variables?: Json
           operationName?: string
           query?: string
-          variables?: Json
+          extensions?: Json
         }
         Returns: Json
       }
@@ -34,6 +34,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      sample_generations: {
+        Row: {
+          created_at: string | null
+          duration: number | null
+          id: string
+          prompt: string
+          public_url: string | null
+          sample_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          duration?: number | null
+          id?: string
+          prompt: string
+          public_url?: string | null
+          sample_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          duration?: number | null
+          id?: string
+          prompt?: string
+          public_url?: string | null
+          sample_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sample_generations_sample_id_fkey"
+            columns: ["sample_id"]
+            isOneToOne: false
+            referencedRelation: "samples"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       samples: {
         Row: {
           created_at: string | null
