@@ -57,6 +57,13 @@ const VibeShifterTerminal = () => {
     }
   }, []);
 
+  // Auto-scroll to bottom when history changes
+  useEffect(() => {
+    if (terminalScreenRef.current) {
+      terminalScreenRef.current.scrollTop = terminalScreenRef.current.scrollHeight;
+    }
+  }, [history]);
+
   // Generic wrapper to run a command with loading UI
   const withLoading = useCallback(async <T,>(fn: () => Promise<T>, options?: { indeterminate?: boolean }): Promise<T> => {
     setIsLoading(true);
@@ -67,6 +74,7 @@ const VibeShifterTerminal = () => {
       return result;
     } finally {
       // Do not reset here if caller wants to keep loading until an external event resolves.
+      setIsLoading(false);
     }
   }, []);
 
@@ -98,26 +106,28 @@ const VibeShifterTerminal = () => {
 
   // Command handlers
   const handleLs = async () => {
-    const { data: samples } = await refetchSamples();
-    if (!samples || samples.length === 0) {
-      setHistory(h => [...h, "No samples found."]);
-      return;
-    }
-    // Column widths
-    const colIdx = 2, colId = 16, colPrompt = 30, colTrim = 5;
-    const pad = (str: string, len: number) => str.length >= len ? str.slice(0, len) : str + ' '.repeat(len - str.length);
-    // Header and separator
-    const header = `${pad('#', colIdx)} | ${pad('ID', colId)} | ${pad('PROMPT', colPrompt)} | ${pad('START', colTrim)} | ${pad('END', colTrim)}`;
-    const sep = `${'-'.repeat(colIdx)} | ${'-'.repeat(colId)} | ${'-'.repeat(colPrompt)} | ${'-'.repeat(colTrim)} | ${'-'.repeat(colTrim)}`;
-    const rows = (samples as Sample[]).map((s, i) => {
-      const idx = pad(i.toString(), colIdx);
-      const name = s.id.slice(0, colId);
-      const prompt = s.normalized_prompt || '';
-      const trimStart = s.trim_start !== null && s.trim_start !== undefined ? s.trim_start.toString() : '';
-      const trimEnd = s.trim_end !== null && s.trim_end !== undefined ? s.trim_end.toString() : '';
-      return `${pad(idx, colIdx)} | ${pad(name, colId)} | ${pad(prompt, colPrompt)} | ${pad(trimStart, colTrim)} | ${pad(trimEnd, colTrim)}`;
-    });
-    setHistory(h => [...h, header, sep, ...rows]);
+    await withLoading(async () => {
+      const { data: samples } = await refetchSamples();
+      if (!samples || samples.length === 0) {
+        setHistory(h => [...h, "No samples found."]);
+        return;
+      }
+      // Column widths
+      const colIdx = 2, colId = 16, colPrompt = 30, colTrim = 5;
+      const pad = (str: string, len: number) => str.length >= len ? str.slice(0, len) : str + ' '.repeat(len - str.length);
+      // Header and separator
+      const header = `${pad('#', colIdx)} | ${pad('ID', colId)} | ${pad('PROMPT', colPrompt)} | ${pad('START', colTrim)} | ${pad('END', colTrim)}`;
+      const sep = `${'-'.repeat(colIdx)} | ${'-'.repeat(colId)} | ${'-'.repeat(colPrompt)} | ${'-'.repeat(colTrim)} | ${'-'.repeat(colTrim)}`;
+      const rows = (samples as Sample[]).map((s, i) => {
+        const idx = pad(i.toString(), colIdx);
+        const name = s.id.slice(0, colId);
+        const prompt = s.normalized_prompt || '';
+        const trimStart = s.trim_start !== null && s.trim_start !== undefined ? s.trim_start.toString() : '';
+        const trimEnd = s.trim_end !== null && s.trim_end !== undefined ? s.trim_end.toString() : '';
+        return `${pad(idx, colIdx)} | ${pad(name, colId)} | ${pad(prompt, colPrompt)} | ${pad(trimStart, colTrim)} | ${pad(trimEnd, colTrim)}`;
+      });
+      return setHistory(h => [...h, header, sep, ...rows]);
+    }, { indeterminate: true });
   };
 
   const handleHelp = () => {
@@ -211,29 +221,33 @@ const VibeShifterTerminal = () => {
   };
 
   const handleWhoAmI = async () => {
-    const { data } = await supabase.auth.getUser();
-    const user = data.user as unknown as { id: string; is_anonymous?: boolean } | null;
-    if (!user) {
-      setHistory(h => [...h, "No user session."]);
-      return;
-    }
-    setHistory(h => [...h, `User: ${user.id} (${user.is_anonymous ? 'Anonymous' : 'Authenticated'})`]);
+    await withLoading(async () => {
+      const { data } = await supabase.auth.getUser();
+      const user = data.user as unknown as { id: string; is_anonymous?: boolean } | null;
+      if (!user) {
+        setHistory(h => [...h, "No user session."]);
+        return;
+      }
+      setHistory(h => [...h, `User: ${user.id} (${user.is_anonymous ? 'Anonymous' : 'Authenticated'})`]);
+    }, { indeterminate: true });
   };
 
   const handleQuota = async () => {
-    const { data: userData } = await supabase.auth.getUser();
-    const user = userData.user as unknown as { id: string; is_anonymous?: boolean } | null;
-    if (!user) {
-      setHistory(h => [...h, "No user session."]);
-      return;
-    }
-    const { count } = await supabase
-      .from('sample_generations')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id);
-    const used = count ?? 0;
-    const limit = user.is_anonymous ? 3 : 10;
-    setHistory(h => [...h, `Quota: ${used}/${limit} generation(s) used`]);
+    await withLoading(async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData.user as unknown as { id: string; is_anonymous?: boolean } | null;
+      if (!user) {
+        setHistory(h => [...h, "No user session."]);
+        return;
+      }
+      const { count } = await supabase
+        .from('sample_generations')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+      const used = count ?? 0;
+      const limit = user.is_anonymous ? 3 : 10;
+      setHistory(h => [...h, `Quota: ${used}/${limit} generation(s) used`]);
+    }, { indeterminate: true });
   };
 
   const handleLogin = async (args: string[]) => {
@@ -244,21 +258,23 @@ const VibeShifterTerminal = () => {
     }
     const email = args[2];
     setLastLoginEmail(email);
-    try {
-      const origin = typeof window !== 'undefined' ? window.location.origin : undefined;
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: origin, shouldCreateUser: true }
-      });
-      if (error) {
-        setHistory(h => [...h, `Login error: ${error.message}`]);
-      } else {
-        setHistory(h => [...h, `Magic link sent to ${email}. Check your email or enter the 6-digit code with 'verify <otp>'.`]);
+    await withLoading(async () => {
+      try {
+        const origin = typeof window !== 'undefined' ? window.location.origin : undefined;
+        const { error } = await supabase.auth.signInWithOtp({
+          email,
+          options: { emailRedirectTo: origin, shouldCreateUser: true }
+        });
+        if (error) {
+          setHistory(h => [...h, `Login error: ${error.message}`]);
+        } else {
+          setHistory(h => [...h, `Magic link sent to ${email}. Check your email or enter the 6-digit code with 'verify <otp>'.`]);
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Unknown error';
+        setHistory(h => [...h, `Failed to initiate login: ${msg}`]);
       }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Unknown error';
-      setHistory(h => [...h, `Failed to initiate login: ${msg}`]);
-    }
+    }, { indeterminate: true });
   };
 
   const handleVerifyOtp = async (args: string[]) => {
@@ -271,25 +287,29 @@ const VibeShifterTerminal = () => {
       return;
     }
     const otp = args[1];
-    try {
-      // Verify email OTP. If identity linking is supported, Supabase will complete it; otherwise, signs in.
-      const { error } = await supabase.auth.verifyOtp({
-        email: lastLoginEmail,
-        token: otp,
-        type: 'email'
-      });
-      if (error) throw error;
-      setHistory(h => [...h, `Login successful.`]);
-      await handleWhoAmI();
-      await handleQuota();
-    } catch {
-      setHistory(h => [...h, "Invalid or expired code. Please try 'login email <address>' again."]);
-    }
+    await withLoading(async () => {
+      try {
+        // Verify email OTP. If identity linking is supported, Supabase will complete it; otherwise, signs in.
+        const { error } = await supabase.auth.verifyOtp({
+          email: lastLoginEmail,
+          token: otp,
+          type: 'email'
+        });
+        if (error) throw error;
+        setHistory(h => [...h, `Login successful.`]);
+        await handleWhoAmI();
+        await handleQuota();
+      } catch {
+        setHistory(h => [...h, "Invalid or expired code. Please try 'login email <address>' again."]);
+      }
+    }, { indeterminate: true });
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setHistory(h => [...h, "Signed out."]);
+    await withLoading(async () => {
+      await supabase.auth.signOut();
+      setHistory(h => [...h, "Signed out."]);
+    }, { indeterminate: true });
   };
 
   const handleCommand = async (cmd: string) => {
