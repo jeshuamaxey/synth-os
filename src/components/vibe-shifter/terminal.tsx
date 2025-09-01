@@ -12,12 +12,15 @@ import { useSampleLoadingProgress } from "@/hooks/useVibeShifterState";
 import { useVibeShifterEvent } from "@/hooks/useVibeShifterEvent";
 import { useVibeShifter } from "@/providers/vibe-shifter-provider";
 import { supabase } from "@/lib/supabase";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 // Persist boot state across remounts within the same session
 let TERMINAL_BOOTED = false;
 let TERMINAL_BOOT_LINES: string[] = [];
 
 const VibeShifterTerminal = () => {
+  const [captchaToken, setCaptchaToken] = useState<string | undefined>(undefined);
+
   const { engine, setSample } = useVibeShifter();
   const engineProgress = useSampleLoadingProgress();
   const loadedSampleId = useVibeShifterEvent<string>(engine, 'loaded', (p: unknown) => (p as { sampleId: string }).sampleId);
@@ -263,7 +266,7 @@ const VibeShifterTerminal = () => {
         const origin = typeof window !== 'undefined' ? window.location.origin : undefined;
         const { error } = await supabase.auth.signInWithOtp({
           email,
-          options: { emailRedirectTo: origin, shouldCreateUser: true }
+          options: { emailRedirectTo: origin, shouldCreateUser: true, captchaToken }
         });
         if (error) {
           setHistory(h => [...h, `Login error: ${error.message}`]);
@@ -459,6 +462,7 @@ const VibeShifterTerminal = () => {
   }, [])
 
   return (
+    <>
     <div className="h-screen flex flex-col bg-[#1a1a1a] text-terminal-pixel">
       <div className="flex-1 basis-1/2 min-h-0 max-h-1/2 overflow-y-hidden">
         <Panel header="SYNTH-OS v2.1" className="h-full w-full max-w-none flex flex-col">
@@ -492,6 +496,13 @@ const VibeShifterTerminal = () => {
         <VibeShifter keyboardControlsEnabled={keyboardControlsEnabled} setKeyboardControlsEnabled={setKeyboardControlsEnabled} />
       </div>
     </div>
+    <Turnstile
+      siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+      onSuccess={(token) => {
+        setCaptchaToken(token)
+      }}
+    />
+    </>
   );
 };
 
