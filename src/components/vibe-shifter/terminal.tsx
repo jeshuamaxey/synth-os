@@ -478,7 +478,7 @@ const VibeShifterTerminal = () => {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-[#1a1a1a] text-terminal-pixel">
+    <div className={`h-screen flex flex-col bg-[#1a1a1a] text-terminal-pixel ${booting ? 'pointer-events-none overflow-hidden' : ''}`}>
       <div className="flex-1 basis-1/2 min-h-0 max-h-1/2 overflow-y-hidden">
         <Panel header="SYNTH-OS v2.1" className="h-full w-full max-w-none flex flex-col">
           <TerminalScreen
@@ -504,10 +504,7 @@ const VibeShifterTerminal = () => {
           />
         </Panel>
       </div>
-      <div
-        className="flex-1 basis-1/2 min-h-0 max-h-1/2 flex flex-col items-center mt-8"
-        style={booting ? { opacity: 0.5, pointerEvents: 'none', userSelect: 'none' } : {}}
-      >
+      <div className="flex-1 basis-1/2 min-h-0 max-h-1/2 flex flex-col items-center mt-8">
         <VibeShifter booting={booting} keyboardControlsEnabled={keyboardControlsEnabled} setKeyboardControlsEnabled={setKeyboardControlsEnabled} />
       </div>
     </div>
