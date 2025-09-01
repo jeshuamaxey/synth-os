@@ -6,7 +6,7 @@ import Waveform from "./waveform"
 import { TrimControls } from "./trim-controls"
 import { useTrimState } from '@/hooks/useVibeShifterState'
 
-const WaveformEditor = ({ vibeShifterAudio, waveformHeight = 100 }: { vibeShifterAudio: VibeShifterAudio, waveformHeight?: number }) => {
+const WaveformEditor = ({ vibeShifterAudio, waveformHeight = 100 }: { vibeShifterAudio: VibeShifterAudio | null, waveformHeight?: number }) => {
   const containerRef = useRef<HTMLDivElement>(null)
 
   const [trimState, setTrimState] = useTrimState()
@@ -19,17 +19,27 @@ const WaveformEditor = ({ vibeShifterAudio, waveformHeight = 100 }: { vibeShifte
   }, [])
 
   useEffect(() => {
+    if(!vibeShifterAudio) return
     vibeShifterAudio.addEventListener('loaded', () => {
       setDuration(vibeShifterAudio.duration ?? 0)
     })
   }, [vibeShifterAudio])
 
   useEffect(() => {
+    if(!vibeShifterAudio) return
     setTrimmedDuration(vibeShifterAudio.trimmedDuration)
-  }, [vibeShifterAudio.trimmedDuration])
+  }, [vibeShifterAudio])
 
   const effectiveStartMs = trimState?.trimStartMs ?? 0
-  const effectiveEndMs = trimState?.trimEndMs ?? (Math.round((vibeShifterAudio.duration ?? 0) * 1000))
+  const effectiveEndMs = trimState?.trimEndMs ?? (Math.round((vibeShifterAudio?.duration ?? 0) * 1000))
+
+  if(!vibeShifterAudio) {
+    return <>
+    <div className="absolute inset-0 flex items-center justify-center">
+      <div className="text-center text-slate-500 text-sm">NO SIGNAL</div>
+    </div>
+    </>
+  }
 
   return <div>
     <div className="px-2" ref={containerRef}>

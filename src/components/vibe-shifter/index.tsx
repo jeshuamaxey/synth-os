@@ -14,11 +14,12 @@ import { useIsPlaying } from "@/hooks/useVibeShifterState";
 const notes = ['C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4', 'C5']
 
 type VibeShifterProps = {
+  booting: boolean
   keyboardControlsEnabled: boolean
   setKeyboardControlsEnabled: (enabled: boolean) => void
 }
 
-const VibeShifterContent = ({ keyboardControlsEnabled, setKeyboardControlsEnabled }: Omit<VibeShifterProps, 'sample'>) => {
+const VibeShifter = ({ booting, keyboardControlsEnabled, setKeyboardControlsEnabled }: VibeShifterProps) => {
   const { engine: vibeShifterAudio } = useVibeShifter();
   const isPlaying = useIsPlaying();
   const waveformHeight = 100
@@ -34,70 +35,38 @@ const VibeShifterContent = ({ keyboardControlsEnabled, setKeyboardControlsEnable
       trimEnd: vibeShifterAudio.trimEndMs,
     });
   }
-
-  // Inactive state
-  if (!vibeShifterAudio || !vibeShifterAudio.sample) {
-    return (
-      <PanelGrid>
-        <Panel className="basis-1/3" header="WAVEFORM ANALYZER">
-        <div style={{height: waveformHeight}} className="flex justify-between my-4 h-32 bg-[#111] rounded-lg border-3 border-[#333] relative overflow-hidden mb-4 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
-            <WaveformGrid />
-            <div style={{position: 'absolute', width: '100%', top: '40%', left: 0, textAlign: 'center', color: '#333', fontSize: 18, letterSpacing: 2}}>NO SIGNAL</div>
-          </div>
-          <div className="flex justify-between items-center mt-4 text-sm">
-            <StatusIndicator status="none" label="no sample" />
-          </div>
-        </Panel>
-        <Panel className="basis-1/3" header="KEYBOARD CONTROLLER">
-          <div className="flex justify-between my-4 h-32">
-            <KeyBoard notes={notes} onPress={() => {}} enabled={false} />
-          </div>
-          <div className="flex justify-between items-center mt-4 text-sm">
-            <StatusIndicator status="none" label="enabled" />
-            <StatusIndicator status="none" label="playing" />
-          </div>
-        </Panel>
-      </PanelGrid>
-    )
-  }
   
   return (
     <PanelGrid>
       <Panel className="basis-1/3" header="WAVEFORM ANALYZER">
         <div className="flex justify-between my-4 h-32 bg-[#111] border-3 rounded-lg border-[#333] relative overflow-hidden mb-4 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
           <WaveformGrid />
-          {vibeShifterAudio && <WaveformEditor vibeShifterAudio={vibeShifterAudio} waveformHeight={waveformHeight} />}
+          <WaveformEditor vibeShifterAudio={vibeShifterAudio} waveformHeight={waveformHeight} />
         </div>
         <div className="flex justify-between items-center mt-4 text-sm">
-          <StatusIndicator status="ok" label="sample loaded" />
-          <div className="flex gap-2 items-center justify-end">  
-            <ControlButton onClick={() => vibeShifterAudio.play('C4')}>PREVIEW</ControlButton>
-            <ControlButton onClick={() => update()}>
-              {sampleMutation.isPending ? <EllipsisSpinner /> : 'SAVE'}
-            </ControlButton>
-          </div>
+          <StatusIndicator status={vibeShifterAudio?.sample?.id ? 'ok' : 'none'} label={vibeShifterAudio?.sample?.id ? 'sample loaded' : 'no sample'} />
+          
+          {vibeShifterAudio?.sample?.id && (
+            <div className="flex gap-2 items-center justify-end">  
+              <ControlButton onClick={() => vibeShifterAudio.play('C4')}>PREVIEW</ControlButton>
+              <ControlButton onClick={() => update()}>
+                {sampleMutation.isPending ? <EllipsisSpinner /> : 'SAVE'}
+              </ControlButton>
+            </div>
+          )}
         </div>
       </Panel>
       <Panel className="basis-1/3" header="KEYBOARD CONTROLLER">
         <div className="flex justify-between my-4 h-32">
-          {vibeShifterAudio && <KeyBoard notes={notes} onPress={note => vibeShifterAudio.play(note)} enabled={keyboardControlsEnabled} />}
+          <KeyBoard notes={notes} onPress={note => vibeShifterAudio?.play(note)} enabled={!booting && keyboardControlsEnabled} />
         </div>
         <div className="flex justify-between items-center mt-4 text-sm">
-          <StatusIndicator onClick={() => setKeyboardControlsEnabled(!keyboardControlsEnabled)} status={keyboardControlsEnabled ? 'ok' : 'error'} label={keyboardControlsEnabled ? 'keys enabled' : 'keys disabled'} />
+          <StatusIndicator onClick={() => setKeyboardControlsEnabled(!keyboardControlsEnabled)} status={!booting && keyboardControlsEnabled ? 'ok' : 'error'} label={!booting && keyboardControlsEnabled ? 'keys enabled' : 'keys disabled'} />
           <StatusIndicator status={isPlaying ? 'ok' : 'none'} label="playing" />
         </div>
       </Panel>
     </PanelGrid>
   )
 }
-
-const VibeShifter = ({ keyboardControlsEnabled, setKeyboardControlsEnabled }: VibeShifterProps) => {
-  return (
-    <VibeShifterContent 
-      keyboardControlsEnabled={keyboardControlsEnabled} 
-      setKeyboardControlsEnabled={setKeyboardControlsEnabled} 
-    />
-  );
-};
 
 export default VibeShifter;

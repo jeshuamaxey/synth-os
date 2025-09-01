@@ -505,13 +505,13 @@ const VibeShifterTerminal = () => {
         </Panel>
       </div>
       <div
-        className="flex-1 basis-1/2 min-h-0 max-h-1/2 overflow-y-auto flex flex-col items-center mt-8"
+        className="flex-1 basis-1/2 min-h-0 max-h-1/2 flex flex-col items-center mt-8"
         style={booting ? { opacity: 0.5, pointerEvents: 'none', userSelect: 'none' } : {}}
       >
-        <VibeShifter keyboardControlsEnabled={keyboardControlsEnabled} setKeyboardControlsEnabled={setKeyboardControlsEnabled} />
+        <VibeShifter booting={booting} keyboardControlsEnabled={keyboardControlsEnabled} setKeyboardControlsEnabled={setKeyboardControlsEnabled} />
       </div>
     </div>
   );
 };
 
-export default VibeShifterTerminal; 
+export default VibeShifterTerminal;

@@ -40,7 +40,7 @@ export const Panel = ({ header, className, children }: { header: string, classNa
           border-b border-[#222] shadow
           font-bold
           bg-gradient-to-r from-[#444] via-[#666] to-[#444] text-[#ccc] px-4 py-2
-          sticky top-0 z-10
+           top-0 z-10
         `}
         style={{ minHeight: '44px' }}
       >
