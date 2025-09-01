@@ -461,8 +461,23 @@ const VibeShifterTerminal = () => {
     setBootLines(lines);
   }, [])
 
+  if(!captchaToken) {
+    return (
+      <div className="h-screen flex flex-col bg-[#1a1a1a] flex-1 items-center justify-center">
+        <Turnstile
+          siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+          onSuccess={(token) => {
+            setCaptchaToken(token)
+          }}
+          options={{
+            theme: 'dark'
+          }}
+        />
+      </div>
+    )
+  }
+
   return (
-    <>
     <div className="h-screen flex flex-col bg-[#1a1a1a] text-terminal-pixel">
       <div className="flex-1 basis-1/2 min-h-0 max-h-1/2 overflow-y-hidden">
         <Panel header="SYNTH-OS v2.1" className="h-full w-full max-w-none flex flex-col">
@@ -496,13 +511,6 @@ const VibeShifterTerminal = () => {
         <VibeShifter keyboardControlsEnabled={keyboardControlsEnabled} setKeyboardControlsEnabled={setKeyboardControlsEnabled} />
       </div>
     </div>
-    <Turnstile
-      siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
-      onSuccess={(token) => {
-        setCaptchaToken(token)
-      }}
-    />
-    </>
   );
 };
 
