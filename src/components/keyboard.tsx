@@ -52,11 +52,12 @@ const Key = ({ note, onPress, isActive, style, displayLetter }: { note: string, 
 type KeyBoardProps = {
   notes: string[]
   onPress: (note: string) => void
+  keyPressEnabled: boolean
   enabled: boolean
 }
 
-const KeyBoard = ({ notes, onPress, enabled }: KeyBoardProps) => {
-  const downKeys = useKeyboardToNote(onPress, enabled)
+const KeyBoard = ({ notes, onPress, keyPressEnabled, enabled }: KeyBoardProps) => {
+  const downKeys = useKeyboardToNote(onPress, keyPressEnabled)
 
   const WHITE_WIDTH = 40
   const BLACK_WIDTH = 24
@@ -68,13 +69,13 @@ const KeyBoard = ({ notes, onPress, enabled }: KeyBoardProps) => {
 
   const depressedNotes = [...downKeys].map(key => KEY_TO_NOTE[key])
 
-  return <div className="relative bg-black p-4 rounded-lg border-3 border-[#333]">    
+  return <div className={`relative p-4 ${enabled ? 'opacity-100' : 'opacity-50'}`}>    
     <div className="flex relative z-10">
       {whiteKeys.map(note =>{
         const isDepressed = depressedNotes.includes(note)
         
         return <Key
-          displayLetter={enabled}
+          displayLetter={keyPressEnabled}
           key={note}
           note={note}
           onPress={() => onPress(note)}
@@ -90,7 +91,7 @@ const KeyBoard = ({ notes, onPress, enabled }: KeyBoardProps) => {
         const isDepressed = depressedNotes.includes(note)
 
         return <Key
-          displayLetter={enabled}
+          displayLetter={keyPressEnabled}
           key={note}
           note={note}
           onPress={() => onPress(note)}

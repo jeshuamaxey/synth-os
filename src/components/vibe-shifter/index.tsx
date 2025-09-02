@@ -57,8 +57,13 @@ const VibeShifter = ({ booting, keyboardControlsEnabled, setKeyboardControlsEnab
         </div>
       </Panel>
       <Panel className="basis-1/3" header="KEYBOARD CONTROLLER">
-        <div className="flex justify-between my-4 h-32">
-          <KeyBoard notes={notes} onPress={note => vibeShifterAudio?.play(note)} enabled={!booting && keyboardControlsEnabled} />
+      <div className="flex justify-between my-4 h-32 bg-[#111] border-3 rounded-lg border-[#333] relative overflow-hidden mb-4 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
+          <WaveformGrid />
+          <KeyBoard
+            notes={notes}
+            onPress={note => vibeShifterAudio?.play(note)}
+            enabled={!booting && !!vibeShifterAudio?.sample?.id}
+            keyPressEnabled={!booting && keyboardControlsEnabled} />
         </div>
         <div className="flex justify-between items-center mt-4 text-sm">
           <StatusIndicator onClick={() => setKeyboardControlsEnabled(!keyboardControlsEnabled)} status={!booting && keyboardControlsEnabled ? 'ok' : 'error'} label={!booting && keyboardControlsEnabled ? 'keys enabled' : 'keys disabled'} />
