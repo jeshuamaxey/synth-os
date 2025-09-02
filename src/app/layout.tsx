@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import QueryClientProvider from "@/providers/query-client-provider";
 import AuthBootstrap from "@/providers/auth-bootstrap";
+import { CaptchaProvider } from "@/providers/captcha-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,9 +32,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased h-full min-h-screen`}
       >
         <QueryClientProvider>
-          <AuthBootstrap>
-            {children}
-          </AuthBootstrap>
+          <CaptchaProvider>
+            <AuthBootstrap>
+              {children}
+            </AuthBootstrap>
+          </CaptchaProvider>
         </QueryClientProvider>
         <Analytics />
       </body>

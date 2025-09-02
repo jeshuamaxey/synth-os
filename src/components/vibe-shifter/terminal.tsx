@@ -13,13 +13,14 @@ import { useVibeShifterEvent } from "@/hooks/useVibeShifterEvent";
 import { useVibeShifter } from "@/providers/vibe-shifter-provider";
 import { supabase } from "@/lib/supabase";
 import { Turnstile } from "@marsidev/react-turnstile";
+import { useCaptcha } from "@/providers/captcha-context";
 
 // Persist boot state across remounts within the same session
 let TERMINAL_BOOTED = false;
 let TERMINAL_BOOT_LINES: string[] = [];
 
 const VibeShifterTerminal = () => {
-  const [captchaToken, setCaptchaToken] = useState<string | undefined>(undefined);
+  const { setCaptchaSolved, setCaptchaToken, captchaToken } = useCaptcha();
 
   const { engine, setSample } = useVibeShifter();
   const engineProgress = useSampleLoadingProgress();
@@ -176,8 +177,9 @@ const VibeShifterTerminal = () => {
     // Phase 1: Indeterminate while the API generates audio and we await response
     await withLoading(async () => {
       try {
-        const { data: sessionData } = await supabase.auth.getSession();
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         const token = sessionData.session?.access_token;
+        console.log('Token', sessionData, sessionError)
         const response = await fetch("/api/samples/generate", {
           method: "POST",
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
@@ -490,7 +492,8 @@ const VibeShifterTerminal = () => {
         <Turnstile
           siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
           onSuccess={(token) => {
-            setCaptchaToken(token)
+            setCaptchaToken(token);
+            setCaptchaSolved(true);
           }}
           options={{
             theme: 'dark'

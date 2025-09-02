@@ -95,7 +95,7 @@ const TerminalScreen = forwardRef<HTMLDivElement, TerminalScreenProps>(({
           setBootTypingLines([...lines]);
           setBootTypingCurrentLine(typed);
           // wait til next character
-          await sleep(18 + Math.random() * 30);
+          await sleep(9 + Math.random() * 8);
         }
         lines.push(line);
         setBootTypingLines([...lines]);
