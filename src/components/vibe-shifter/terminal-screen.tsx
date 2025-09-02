@@ -25,15 +25,21 @@ interface TerminalScreenProps {
 
 // Boot sequence steps
 const BOOT_TEXT = [
-  "SYNTH-OS v2.1 BOOTING...",
+  "BOOTING...",
   "[████████████████████████] 100%",
+  " ",
+  "SYNTH-OS is an interactive audio synthesis platform that converts audio samples into playable keyboard instruments.",
+  " ",
+  " ",
+  "QUICK START:",
   "",
-  "Initializing audio drivers... OK",
-  "Loading sample banks... OK",
-  "Calibrating oscillators... OK",
-  "Connecting modular rack... OK",
-  "",
-  "SYSTEM READY",
+  "1. EXPLORE: Type 'ls' to see available audio",
+  "2. SELECT: Type 'load [sample_id]' to choose one (you can use the first few characters of the sample id)",
+  "3. PLAY: Use your keyboard to trigger sounds",
+  "4. LEARN: Type 'help' for advanced features",
+  " ",
+  " ",
+  "SYSTEM READY - BEGIN YOUR AUDIO JOURNEY",
   "Type 'help' for available commands",
 ];
 

@@ -137,18 +137,19 @@ const VibeShifterTerminal = () => {
     setHistory(h => [
       ...h,
       "Available commands:",
-      "  help           Show this help message",
+      "  help                              Show this help message",
       "  generate <description> <duration> Generate a sample",
-      "  clear          Clear the terminal",
-      "  ls             List all samples",
-      "  load <id>      Load a sample by ID. Partial IDs are supported. Use 'ls' to list IDs",
-      "  load           Load an example sample",
-      "  whoami         Show current user and session type",
-      "  quota          Show usage and limit",
-      "  login email <address>   Send a magic link to upgrade session",
-      "  verify <otp>   Verify the 6-digit code from email to complete login",
-      "  logout         Sign out",
-      "  why            Why does this exist?"
+      "  clear                             Clear the terminal",
+      "  ls                                List all samples",
+      "  load <id>                         Load a sample by ID. Partial IDs are supported. Use 'ls' to list IDs",
+      "  load                              Load an example sample",
+      "  whoami                            Show current user and session type",
+      "  quota                             Show usage and limit",
+      "  login email <address>             Send a magic link to upgrade session",
+      "  verify <otp>                      Verify the 6-digit code from email to complete login",
+      "  logout                            Sign out",
+      "  schematic                         Show the system schematic",
+      "  why                               Why does this exist?"
     ]);
   };
 
@@ -280,6 +281,25 @@ const VibeShifterTerminal = () => {
     }, { indeterminate: true });
   };
 
+  const handleSchematic = () => {
+    const schematic = [
+      "SYNTH-OS SYSTEM ARCHITECTURE",
+      "============================",
+      "",
+      "┌─────────────────┐    ┌──────────────────┐    ┌────────────────────┐",
+      "│  SAMPLE STORAGE │──> │ WAVEFORM ANALYZER│──> │ KEYBOARD CONTROLLER│",
+      "│                 │    │                  │    │                    │",
+      "│ • Audio Files   │    │ • FFT Analysis   │    │ • MIDI Mapping     │",
+      "│ • Metadata      │    │ • Peak Detection │    │ • Key Bindings     │",
+      "│ • Generation    │    │ • Visualization  │    │ • Playback         │",
+      "└─────────────────┘    └──────────────────┘    └────────────────────┘",
+    ];
+    
+    schematic.forEach(line => {
+      setHistory(h => [...h, line]);
+    });
+  };
+
   const handleVerifyOtp = async (args: string[]) => {
     if (args.length !== 2) {
       setHistory(h => [...h, "Usage: verify <otp>"]);
@@ -352,6 +372,9 @@ const VibeShifterTerminal = () => {
         break;
       case "logout":
         await handleLogout();
+        break;
+      case "schematic":
+        handleSchematic();
         break;
       case "why":
         setHistory(h => [...h, "Because it was fun. Made by Jeshua Maxey"]);
